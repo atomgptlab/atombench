@@ -213,3 +213,9 @@ job_runs/agpt_benchmark/fl_studio.out
         job_runs/cdvae_benchmark/hydra_outputs/
         job_runs/cdvae_benchmark/wandb_outputs/
         job_runs/flowmm_benchmark/fl_studio.out
+
+
+
+manuscript/
+
+
