@@ -5,6 +5,8 @@ EXPS = [
     "cdvae_benchmark_jarvis",
     "flowmm_benchmark_alex",
     "flowmm_benchmark_jarvis",
+    "mattergen_benchmark_alex",
+    "mattergen_benchmark_jarvis",
 ]
 
 for exp in EXPS:
@@ -47,11 +49,20 @@ rule make_flowmm_env:
         bash job_runs/flowmm_benchmark_alex/conda_env.job
         """
 
+rule make_mattergen_env:
+    output:
+        touch("mattergen_env.created")
+    shell:
+        """
+        bash job_runs/mattergen_benchmark_alex/conda_env.job
+        """
+
 rule envs_ready:
     input:
         "atomgpt_env.created",
         "cdvae_env.created",
-        "flowmm_env.created"
+        "flowmm_env.created",
+        "mattergen_env.created"
     output:
         touch("all_envs_ready.txt")
     shell:

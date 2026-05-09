@@ -31,6 +31,14 @@ stages:
     outs:
       - ../models/flowmm/data/alexandria:
           cache: false
+  mattergen:
+    cmd: bash scripts/run_mattergen_data.sh
+    deps:
+      - scripts/run_mattergen_data.sh
+      - ../models/cdvae/data/alexandria
+    outs:
+      - ../models/mattergen/datasets/cache/alex_atombench:
+          cache: false
   check:
     cmd: python scripts/checker.py --atomgpt-dir ./atomgpt_data --cdvae-dir ../models/cdvae/data/alexandria --flowmm-dir ../models/flowmm/data/alexandria --strict-order
     deps:

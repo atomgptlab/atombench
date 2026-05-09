@@ -7,3 +7,6 @@
 [submodule "models/cdvae"]
 	path = models/cdvae
 	url = git@github.com:crhysc/cdvae.git
+[submodule "models/mattergen"]
+	path = models/mattergen
+	url = https://github.com/crhysc/mattergen

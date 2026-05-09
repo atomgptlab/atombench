@@ -1,0 +1,40 @@
+#!/bin/bash
+#SBATCH --job-name=mgen_alex
+#SBATCH --gres=gpu:1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=8
+#SBATCH --output=slurm_alex_mattergen_train.out
+
+
+eval "$(conda shell.bash hook)"
+source scripts/wandb_api_key.sh
+source scripts/absolute_path.sh
+module load cuda/11.8
+conda activate mattergen
+export HYDRA_FULL_ERROR="1"
+
+ROOT="${ABS_PATH%/}"
+export MATTERGEN_DATA_ROOT="${ROOT}/models/mattergen/datasets/cache"
+export MATTERGEN_RUN_ROOT="${ROOT}/job_runs/mattergen_benchmark_alex/outputs"
+export OUTPUT_DIR="${MATTERGEN_RUN_ROOT}"
+
+SECONDS=0
+start_iso="$(date -Iseconds)"
+
+nvidia-smi
+cd models/mattergen
+
+mattergen-train \
+    data_module=alex_atombench \
+    ~trainer.logger \
+    trainer.accumulate_grad_batches=4
+
+echo "Done"
+
+elapsed="$SECONDS"
+end_iso="$(date -Iseconds)"
+
+printf "Start: %s\nEnd:   %s\nElapsed: %ds (%.2f min, %.2f hr)\n" \
+  "$start_iso" "$end_iso" "$elapsed" \
+  "$(awk "BEGIN{print $elapsed/60}")" \
+  "$(awk "BEGIN{print $elapsed/3600}")"

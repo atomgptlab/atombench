@@ -22,6 +22,14 @@ stages:
     outs:
       - ../models/flowmm/data/supercon:
           cache: false
+  mattergen:
+    cmd: bash scripts/run_mattergen_data.sh
+    deps:
+      - scripts/run_mattergen_data.sh
+      - ../models/cdvae/data/supercon
+    outs:
+      - ../models/mattergen/datasets/cache/supercon_atombench:
+          cache: false
   check:
     cmd: python scripts/checker.py --atomgpt-dir ./atomgpt_data --cdvae-dir ../models/cdvae/data/supercon --flowmm-dir ../models/flowmm/data/supercon --strict-order
     deps:
