@@ -1,0 +1,67 @@
+#!/bin/bash
+#SBATCH --job-name=mgen_tc_jrv
+#SBATCH --gres=gpu:1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=8
+#SBATCH --output=slurm_jarvis_mattergen_tc_finetune_train.out
+
+
+eval "$(conda shell.bash hook)"
+source scripts/wandb_api_key.sh
+source scripts/absolute_path.sh
+module load cuda/11.8
+conda activate mattergen
+export HYDRA_FULL_ERROR="1"
+
+ROOT="${ABS_PATH%/}"
+export MATTERGEN_DATA_ROOT="${ROOT}/models/mattergen/datasets/cache"
+export MATTERGEN_RUN_ROOT="${ROOT}/job_runs/mattergen_tc_finetune_benchmark_jarvis/outputs"
+export OUTPUT_DIR="${MATTERGEN_RUN_ROOT}"
+
+SECONDS=0
+start_iso="$(date -Iseconds)"
+
+nvidia-smi
+
+python - <<'PYEOF'
+import sys
+from huggingface_hub import hf_hub_download
+REPO = "microsoft/mattergen"
+FILES = [
+    "checkpoints/mattergen_base/checkpoints/last.ckpt",
+    "checkpoints/mattergen_base/config.yaml",
+]
+missing = []
+for f in FILES:
+    try:
+        hf_hub_download(REPO, f, local_files_only=True)
+    except Exception:
+        missing.append(f)
+if missing:
+    print("ERROR: mattergen_base checkpoint not in local HuggingFace cache.", file=sys.stderr)
+    print("Missing files:", file=sys.stderr)
+    for f in missing:
+        print(f"  {f}", file=sys.stderr)
+    print("Re-run the environment setup job (conda_env.job) to download them.", file=sys.stderr)
+    sys.exit(1)
+print("[✓] mattergen_base checkpoint verified in local cache")
+PYEOF
+
+cd models/mattergen
+
+mattergen-finetune \
+    adapter.pretrained_name=mattergen_base \
+    data_module=supercon_atombench_tc \
+    "+lightning_module/diffusion_module/model/property_embeddings@adapter.adapter.property_embeddings_adapt.tc_supercon=tc_supercon" \
+    ~trainer.logger \
+    "data_module.properties=[tc_supercon]"
+
+echo "Done"
+
+elapsed="$SECONDS"
+end_iso="$(date -Iseconds)"
+
+printf "Start: %s\nEnd:   %s\nElapsed: %ds (%.2f min, %.2f hr)\n" \
+  "$start_iso" "$end_iso" "$elapsed" \
+  "$(awk "BEGIN{print $elapsed/60}")" \
+  "$(awk "BEGIN{print $elapsed/3600}")"

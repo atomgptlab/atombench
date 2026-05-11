@@ -7,6 +7,10 @@ EXPS = [
     "flowmm_benchmark_jarvis",
     "mattergen_benchmark_alex",
     "mattergen_benchmark_jarvis",
+    "mattergen_base_benchmark_alex",
+    "mattergen_base_benchmark_jarvis",
+    "mattergen_tc_finetune_benchmark_alex",
+    "mattergen_tc_finetune_benchmark_jarvis",
 ]
 
 for exp in EXPS:

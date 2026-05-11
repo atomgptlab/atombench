@@ -30,6 +30,14 @@ stages:
     outs:
       - ../models/mattergen/datasets/cache/supercon_atombench:
           cache: false
+  mattergen_tc:
+    cmd: bash scripts/run_mattergen_data_tc.sh
+    deps:
+      - scripts/run_mattergen_data_tc.sh
+      - ../models/cdvae/data/supercon
+    outs:
+      - ../models/mattergen/datasets/cache/supercon_atombench_tc:
+          cache: false
   check:
     cmd: python scripts/checker.py --atomgpt-dir ./atomgpt_data --cdvae-dir ../models/cdvae/data/supercon --flowmm-dir ../models/flowmm/data/supercon --strict-order
     deps:
