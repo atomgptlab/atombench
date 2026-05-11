@@ -3,8 +3,7 @@
 # cache.  We reuse the cdvae splits to guarantee identical test sets.
 set -euo pipefail
 
-source scripts/absolute_path.sh
-ROOT="${ABS_PATH%/}"
+ROOT="$(realpath ..)"
 
 CACHE_ROOT="${ROOT}/models/mattergen/datasets/cache"
 RAW_DIR="${ROOT}/models/cdvae/data/supercon"

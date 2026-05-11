@@ -43,55 +43,56 @@ stages:
     deps:
     - path: scripts/alexandria_preprocess.py
       hash: md5
-      md5: ff6079333f1bcf9d2f1c55885e11e650
-      size: 10907
+      md5: bff612a97b3ddd1127e24aa40a6fe8ca
+      size: 10902
     - path: scripts/run_cdvae_data.sh
       hash: md5
-      md5: 0b1d1e8f12d9616aa1bc6fa06f339741
-      size: 516
+      md5: b6f379d35e359e3c7aacd07014fb418a
+      size: 463
     outs:
     - path: ../models/cdvae/data/alexandria
       hash: md5
-      md5: 5d276689d70bc291ef38ad1dbfabafa7.dir
-      size: 18255
+      md5: 718bcbb8ec400e15ba8224c2bc07c5ff.dir
+      size: 7626171
       nfiles: 3
   flowmm:
     cmd: bash scripts/run_flowmm_data.sh
     deps:
     - path: scripts/alexandria_preprocess.py
       hash: md5
-      md5: ff6079333f1bcf9d2f1c55885e11e650
-      size: 10907
+      md5: bff612a97b3ddd1127e24aa40a6fe8ca
+      size: 10902
     - path: scripts/run_flowmm_data.sh
       hash: md5
-      md5: 38c923fe0305bd16af9466a3c18b3294
-      size: 522
+      md5: 58c311bd3328269c1b843b8a01d7e83c
+      size: 524
     outs:
     - path: ../models/flowmm/data/alexandria
       hash: md5
-      md5: 06998a7b9df64b389aa137a87e067de1.dir
-      size: 40813
+      md5: 8a7a4f7965a0ad9a163d69d98e1b862b.dir
+      size: 17379574
       nfiles: 3
   atomgpt:
     cmd: bash scripts/run_atomgpt_data.sh
     deps:
     - path: scripts/alexandria_preprocess.py
       hash: md5
-      md5: ff6079333f1bcf9d2f1c55885e11e650
-      size: 10907
+      md5: bff612a97b3ddd1127e24aa40a6fe8ca
+      size: 10902
     - path: scripts/run_atomgpt_data.sh
       hash: md5
-      md5: 968b77c3554ac17ad79499719236447d
-      size: 270
+      md5: cf15135459029f63ea1fc19ae3c23143
+      size: 207
     outs:
     - path: atomgpt_data
       hash: md5
-      md5: 7916f3e5a96cd8705a5864aede697b62.dir
-      size: 4316
-      nfiles: 21
+      md5: 5f9c17280930c9eb88517a4da2fbffde.dir
+      size: 1861769
+      nfiles: 8254
   check:
-    cmd: python scripts/checker.py --atomgpt-dir ./atomgpt_data --cdvae-dir ../models/cdvae/data/alexandria
-      --flowmm-dir ../models/flowmm/data/alexandria --strict-order
+    cmd: python scripts/checker.py --atomgpt-dir ./atomgpt_data --cdvae-dir 
+      ../models/cdvae/data/alexandria --flowmm-dir 
+      ../models/flowmm/data/alexandria --strict-order
     deps:
     - path: scripts/checker.py
       hash: md5

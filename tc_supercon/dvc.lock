@@ -114,3 +114,39 @@ stages:
       hash: md5
       md5: ca9c8672a7104ddea048b6cd9f65edf4
       size: 9794
+  mattergen:
+    cmd: bash scripts/run_mattergen_data.sh
+    deps:
+    - path: ../models/cdvae/data/supercon
+      hash: md5
+      md5: 09a76f9ca4379517c6d2cbcb400a19ee.dir
+      size: 965041
+      nfiles: 3
+    - path: scripts/run_mattergen_data.sh
+      hash: md5
+      md5: a8719afc291395b1898656da6ab2f840
+      size: 598
+    outs:
+    - path: ../models/mattergen/datasets/cache/supercon_atombench
+      hash: md5
+      md5: abb8aa3feaca5a4f717beec00a72f252.dir
+      size: 282496
+      nfiles: 15
+  mattergen_tc:
+    cmd: bash scripts/run_mattergen_data_tc.sh
+    deps:
+    - path: ../models/cdvae/data/supercon
+      hash: md5
+      md5: 09a76f9ca4379517c6d2cbcb400a19ee.dir
+      size: 965041
+      nfiles: 3
+    - path: scripts/run_mattergen_data_tc.sh
+      hash: md5
+      md5: 0d32bfa48f4ba54c58ca84f7c6955c77
+      size: 1169
+    outs:
+    - path: ../models/mattergen/datasets/cache/supercon_atombench_tc
+      hash: md5
+      md5: abb8aa3feaca5a4f717beec00a72f252.dir
+      size: 282496
+      nfiles: 15
