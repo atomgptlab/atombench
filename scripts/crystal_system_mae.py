@@ -282,14 +282,15 @@ def main():
     angle_tops = g[["alpha", "beta", "gamma"]].max(axis=1).to_numpy(dtype=float)
 
     # Titles (3 lines, symbols)
+    n_bench = len(benchmarks_included)
     title_len = (
         "Mean Absolute Error by Crystal System\n"
-        "Results Pooled from All 6 Benchmarks\n"
+        f"Results Pooled from All {n_bench} Benchmarks\n"
         "Lattice Lengths (Å)"
     )
     title_ang = (
         "Mean Absolute Error by Crystal System\n"
-        "Results Pooled from All 6 Benchmarks\n"
+        f"Results Pooled from All {n_bench} Benchmarks\n"
         "Lattice Angles (°)"
     )
 

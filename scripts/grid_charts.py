@@ -36,11 +36,17 @@ mpl.rcParams.update({
 WVU_BLUE = "#002855"  # target
 WVU_GOLD = "#EEAA00"  # predicted
 
-MODELS = ["agpt", "cdvae", "flowmm"]
-MODEL_LABEL = {"agpt": "AtomGPT", "cdvae": "CDVAE", "flowmm": "FlowMM"}
+MODELS = ["agpt", "cdvae", "flowmm", "mattergen_base", "mattergen"]
+MODEL_LABEL = {
+    "agpt":           "AtomGPT",
+    "cdvae":          "CDVAE",
+    "flowmm":         "FlowMM",
+    "mattergen_base": "MatterGen\nBase",
+    "mattergen":      "MatterGen\nFinetuned",
+}
 PARAMS = ["a", "c", "gamma"]
 PARAM_LABEL = {"a": r"$a$ (Å)", "c": r"$c$ (Å)", "gamma": r"$\gamma$ (°)"}
-PANEL_LETTERS = [f"({chr(97+i)})" for i in range(9)]
+PANEL_LETTERS = [f"({chr(97+i)})" for i in range(26)]
 
 # ── HARD-CODED BINS (uniform within each PNG) ─────────────────────────────
 # Alexandria: finer for a/c, wide for γ
@@ -177,7 +183,8 @@ def plot_dataset_grid(tag: str,
 
     # Smaller, tighter figure. We'll control margins to keep the right-side ylabel
     # clearly separated from the panels (no overlap).
-    fig, axes = plt.subplots(3, 3, figsize=(9, 7))
+    n_models = len(MODELS)
+    fig, axes = plt.subplots(n_models, 3, figsize=(9, 2.8 * n_models))
     # remove all y-axis labels and tick labels
     for ax in axes.ravel():
         ax.set_ylabel("")                                # kill axis label
@@ -234,10 +241,10 @@ def plot_dataset_grid(tag: str,
                     histtype="stepfilled", alpha=0.68, color=WVU_GOLD,
                     edgecolor="none", label="predicted")
 
-            if r == 2:
+            if r == len(MODELS) - 1:
                 ax.set_xlabel(PARAM_LABEL[param], fontsize=14)
 
-            style_axes(ax, left_col=(c == 0), bottom_row=(r == 2))
+            style_axes(ax, left_col=(c == 0), bottom_row=(r == len(MODELS) - 1))
             annotate_kld(ax, klds.get(param))
 
     # single legend (clear & compact)

@@ -40,19 +40,25 @@ df = pd.DataFrame(rows)
 
 # ───────────────────── pretty names / model parsing ─────────────────────
 bnchmk_name_dict = {
-    "agpt_benchmark_alex":    "AtomGPT Alexandria",
-    "agpt_benchmark_jarvis":  "AtomGPT JARVIS",
-    "cdvae_benchmark_alex":   "CDVAE Alexandria",
-    "cdvae_benchmark_jarvis": "CDVAE JARVIS",
-    "flowmm_benchmark_alex":  "FlowMM Alexandria",
-    "flowmm_benchmark_jarvis":"FlowMM JARVIS",
+    "agpt_benchmark_alex":              "AtomGPT Alexandria",
+    "agpt_benchmark_jarvis":            "AtomGPT JARVIS",
+    "cdvae_benchmark_alex":             "CDVAE Alexandria",
+    "cdvae_benchmark_jarvis":           "CDVAE JARVIS",
+    "flowmm_benchmark_alex":            "FlowMM Alexandria",
+    "flowmm_benchmark_jarvis":          "FlowMM JARVIS",
+    "mattergen_benchmark_alex":         "MatterGen Finetuned Alexandria",
+    "mattergen_benchmark_jarvis":       "MatterGen Finetuned JARVIS",
+    "mattergen_base_benchmark_alex":    "MatterGen Base Alexandria",
+    "mattergen_base_benchmark_jarvis":  "MatterGen Base JARVIS",
 }
 
 def infer_model(name: str) -> str:
     name = name.lower()
-    if name.startswith("agpt_"):   return "AtomGPT"
-    if name.startswith("cdvae_"):  return "CDVAE"
-    if name.startswith("flowmm_"): return "FlowMM"
+    if name.startswith("agpt_"):            return "AtomGPT"
+    if name.startswith("cdvae_"):           return "CDVAE"
+    if name.startswith("flowmm_"):          return "FlowMM"
+    if name.startswith("mattergen_base_"):  return "MatterGen Base"
+    if name.startswith("mattergen_"):       return "MatterGen Finetuned"
     return "Other"
 
 # Try preferred RMSE key; fallback to a scalar RMSE if present
@@ -80,10 +86,12 @@ plot_df = (
 
 # ───────────────────── colors by model (3 colors) ─────────────────────
 model_colors = {
-    "AtomGPT": "#1f77b4",  # tab:blue
-    "CDVAE":   "#ff7f0e",  # tab:orange
-    "FlowMM":  "#2ca02c",  # tab:green
-    "Other":   "#7f7f7f",
+    "AtomGPT":           "#1f77b4",  # tab:blue
+    "CDVAE":             "#ff7f0e",  # tab:orange
+    "FlowMM":            "#2ca02c",  # tab:green
+    "MatterGen Finetuned": "#d62728",  # tab:red
+    "MatterGen Base":    "#9467bd",  # tab:purple
+    "Other":             "#7f7f7f",
 }
 plot_df["color"] = plot_df["model"].map(model_colors)
 
@@ -122,9 +130,11 @@ ax.set_xticklabels(x_labels, rotation=30, ha='right', fontsize=13)
 
 # Legend: one color per model (unchanged)
 handles = [
-    mpatches.Patch(color=model_colors["AtomGPT"], label="AtomGPT"),
-    mpatches.Patch(color=model_colors["CDVAE"],  label="CDVAE"),
-    mpatches.Patch(color=model_colors["FlowMM"], label="FlowMM"),
+    mpatches.Patch(color=model_colors["AtomGPT"],             label="AtomGPT"),
+    mpatches.Patch(color=model_colors["CDVAE"],               label="CDVAE"),
+    mpatches.Patch(color=model_colors["FlowMM"],              label="FlowMM"),
+    mpatches.Patch(color=model_colors["MatterGen Finetuned"], label="MatterGen Finetuned"),
+    mpatches.Patch(color=model_colors["MatterGen Base"],      label="MatterGen Base"),
 ]
 ax.legend(handles=handles, title_fontsize=15, fontsize=15)
 
