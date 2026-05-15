@@ -48,17 +48,20 @@ bnchmk_name_dict = {
     "flowmm_benchmark_jarvis":          "FlowMM JARVIS",
     "mattergen_benchmark_alex":         "MatterGen Finetuned Alexandria",
     "mattergen_benchmark_jarvis":       "MatterGen Finetuned JARVIS",
-    "mattergen_base_benchmark_alex":    "MatterGen Base Alexandria",
-    "mattergen_base_benchmark_jarvis":  "MatterGen Base JARVIS",
+    "mattergen_base_benchmark_alex":         "MatterGen Base Alexandria",
+    "mattergen_base_benchmark_jarvis":       "MatterGen Base JARVIS",
+    "mattergen_tc_finetune_benchmark_alex":  "MatterGen TC Finetune Alexandria",
+    "mattergen_tc_finetune_benchmark_jarvis":"MatterGen TC Finetune JARVIS",
 }
 
 def infer_model(name: str) -> str:
     name = name.lower()
-    if name.startswith("agpt_"):            return "AtomGPT"
-    if name.startswith("cdvae_"):           return "CDVAE"
-    if name.startswith("flowmm_"):          return "FlowMM"
-    if name.startswith("mattergen_base_"):  return "MatterGen Base"
-    if name.startswith("mattergen_"):       return "MatterGen Finetuned"
+    if name.startswith("agpt_"):                 return "AtomGPT"
+    if name.startswith("cdvae_"):                return "CDVAE"
+    if name.startswith("flowmm_"):               return "FlowMM"
+    if name.startswith("mattergen_tc_finetune_"): return "MatterGen TC Finetune"
+    if name.startswith("mattergen_base_"):        return "MatterGen Base"
+    if name.startswith("mattergen_"):             return "MatterGen Finetuned"
     return "Other"
 
 # Try preferred RMSE key; fallback to a scalar RMSE if present
@@ -89,9 +92,10 @@ model_colors = {
     "AtomGPT":           "#1f77b4",  # tab:blue
     "CDVAE":             "#ff7f0e",  # tab:orange
     "FlowMM":            "#2ca02c",  # tab:green
-    "MatterGen Finetuned": "#d62728",  # tab:red
-    "MatterGen Base":    "#9467bd",  # tab:purple
-    "Other":             "#7f7f7f",
+    "MatterGen Finetuned":   "#d62728",  # tab:red
+    "MatterGen Base":        "#9467bd",  # tab:purple
+    "MatterGen TC Finetune": "#8c564b",  # tab:brown
+    "Other":                 "#7f7f7f",
 }
 plot_df["color"] = plot_df["model"].map(model_colors)
 

@@ -285,12 +285,18 @@ overlay_hist(plt.subplot(the_grid[1, 2]),
 # ── Final layout & save ──────────────────────────────────────────────────
 plt.tight_layout()
 bench_lookup = {
-    "agpt_benchmark_alex":  "AtomGPT Alexandria",
-    "agpt_benchmark_jarvis":"AtomGPT JARVIS",
-    "cdvae_benchmark_alex": "CDVAE Alexandria",
-    "cdvae_benchmark_jarvis":"CDVAE JARVIS",
-    "flowmm_benchmark_alex":"FlowMM Alexandria",
-    "flowmm_benchmark_jarvis":"FlowMM JARVIS"
+    "agpt_benchmark_alex":                   "AtomGPT Alexandria",
+    "agpt_benchmark_jarvis":                 "AtomGPT JARVIS",
+    "cdvae_benchmark_alex":                  "CDVAE Alexandria",
+    "cdvae_benchmark_jarvis":                "CDVAE JARVIS",
+    "flowmm_benchmark_alex":                 "FlowMM Alexandria",
+    "flowmm_benchmark_jarvis":               "FlowMM JARVIS",
+    "mattergen_benchmark_alex":              "MatterGen Finetuned Alexandria",
+    "mattergen_benchmark_jarvis":            "MatterGen Finetuned JARVIS",
+    "mattergen_base_benchmark_alex":         "MatterGen Base Alexandria",
+    "mattergen_base_benchmark_jarvis":       "MatterGen Base JARVIS",
+    "mattergen_tc_finetune_benchmark_alex":  "MatterGen TC Finetune Alexandria",
+    "mattergen_tc_finetune_benchmark_jarvis":"MatterGen TC Finetune JARVIS",
 }
 fig.subplots_adjust(top=0.88)
 plt.suptitle(bench_lookup.get(Path.cwd().name), fontsize=30)

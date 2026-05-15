@@ -45,8 +45,10 @@ bnchmk_name_dict = {
     "flowmm_benchmark_jarvis":          "FlowMM JARVIS",
     "mattergen_benchmark_alex":         "MatterGen Finetuned Alexandria",
     "mattergen_benchmark_jarvis":       "MatterGen Finetuned JARVIS",
-    "mattergen_base_benchmark_alex":    "MatterGen Base Alexandria",
-    "mattergen_base_benchmark_jarvis":  "MatterGen Base JARVIS",
+    "mattergen_base_benchmark_alex":         "MatterGen Base Alexandria",
+    "mattergen_base_benchmark_jarvis":       "MatterGen Base JARVIS",
+    "mattergen_tc_finetune_benchmark_alex":  "MatterGen TC Finetune Alexandria",
+    "mattergen_tc_finetune_benchmark_jarvis":"MatterGen TC Finetune JARVIS",
 }
 
 ax_label_map = {
