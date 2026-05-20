@@ -3,7 +3,8 @@ rule train_mattergen_tc_finetune_alex:
         touch("mattergen_tc_finetune_benchmark_alex.trained")
     input:
         "mattergen_env.created",
-        "alex_data.created"
+        "alex_data.created",
+        "mattergen_tc_data.created"
     shell:
         """
         sbatch --wait -p nvl --time=24:00:00 job_runs/mattergen_tc_finetune_benchmark_alex/train_mattergen.job
@@ -18,7 +19,7 @@ rule infer_mattergen_tc_finetune_alex:
         "mattergen_tc_finetune_benchmark_alex.trained"
     shell:
         """
-        sbatch --wait -p nvl --time=08:00:00 job_runs/mattergen_tc_finetune_benchmark_alex/inference_mattergen.job
+        sbatch --wait -p nvl --time=04:00:00 job_runs/mattergen_tc_finetune_benchmark_alex/inference_mattergen.job
         """
 
 rule benchmark_mattergen_tc_finetune_alex:
@@ -37,6 +38,6 @@ rule benchmark_mattergen_tc_finetune_alex:
         ROOT="${{ABS_PATH%/}}"
         python job_runs/mattergen_tc_finetune_benchmark_alex/write_benchmark.py \
             --results_path  job_runs/mattergen_tc_finetune_benchmark_alex/results \
-            --test_csv      "${{ROOT}}/models/cdvae/data/alexandria/test.csv" \
+            --test_csv      job_runs/mattergen_tc_finetune_benchmark_alex/results/tc_test_sorted.csv \
             --output_csv    job_runs/mattergen_tc_finetune_benchmark_alex/AI-AtomGen-prop-dft_3d-test-rmse.csv
         """

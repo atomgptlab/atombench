@@ -9,7 +9,7 @@
 eval "$(conda shell.bash hook)"
 source scripts/wandb_api_key.sh
 source scripts/absolute_path.sh
-module load cuda/11.8
+module load cuda/11.5.0
 conda activate mattergen
 export HYDRA_FULL_ERROR="1"
 
@@ -26,6 +26,7 @@ cd models/mattergen
 
 mattergen-train \
     data_module=supercon_atombench \
+    trainer.max_epochs=100 \
     ~trainer.logger \
     trainer.accumulate_grad_batches=4
 

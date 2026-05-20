@@ -7,14 +7,15 @@
 
 
 eval "$(conda shell.bash hook)"
-source scripts/absolute_path.sh
-module load cuda/11.8
+module load cuda/11.5.0
 conda activate mattergen
 
-ROOT="${ABS_PATH%/}"
+ROOT="$(realpath .)"
 MATTERGEN_RUN_ROOT="${ROOT}/job_runs/mattergen_tc_finetune_benchmark_alex/outputs"
 RESULTS_PATH="${ROOT}/job_runs/mattergen_tc_finetune_benchmark_alex/results"
 TEST_CSV="${ROOT}/models/cdvae/data/alexandria/test.csv"
+export TC_COL="Tc"
+export BATCH_SIZE=16
 
 if [[ ! -f "${TEST_CSV}" ]]; then
   echo "ERROR: test CSV not found at ${TEST_CSV}"
@@ -28,12 +29,67 @@ start_iso="$(date -Iseconds)"
 
 nvidia-smi
 
-python job_runs/mattergen_tc_finetune_benchmark_alex/run_tc_inference.py \
-    --model_path   "${MATTERGEN_RUN_ROOT}" \
-    --test_csv     "${TEST_CSV}" \
-    --tc_column    "Tc" \
-    --output_path  "${RESULTS_PATH}" \
-    --guidance_factor 2.0
+export TEST_CSV RESULTS_PATH BATCH_SIZE
+
+# Step 1: filter to TC-annotated rows, sort by Tc, write sorted CSV + bin metadata
+python3 - <<'PYEOF'
+import csv, json, os
+
+tc_col  = os.environ["TC_COL"]
+src     = os.environ["TEST_CSV"]
+out_dir = os.environ["RESULTS_PATH"]
+bs      = int(os.environ["BATCH_SIZE"])
+
+with open(src) as f:
+    rows = list(csv.DictReader(f))
+
+tc_rows = [r for r in rows if r.get(tc_col, "").strip()]
+tc_rows.sort(key=lambda r: float(r[tc_col]))
+
+sorted_csv = os.path.join(out_dir, "tc_test_sorted.csv")
+with open(sorted_csv, "w", newline="") as f:
+    w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+    w.writeheader()
+    w.writerows(tc_rows)
+
+bins = []
+for i in range(0, len(tc_rows), bs):
+    batch = tc_rows[i : i + bs]
+    mean_tc = sum(float(r[tc_col]) for r in batch) / len(batch)
+    bins.append({"mean_tc": mean_tc, "count": len(batch)})
+
+with open(os.path.join(out_dir, "bins.json"), "w") as f:
+    json.dump(bins, f)
+
+print(f"TC rows: {len(tc_rows)}, bins: {len(bins)}")
+PYEOF
+
+# Step 2: one mattergen-generate call per bin
+NBINS=$(python3 -c "import json; print(len(json.load(open('${RESULTS_PATH}/bins.json'))))")
+echo "Running ${NBINS} bins..."
+
+for i in $(seq 0 $((NBINS - 1))); do
+    MEAN_TC=$(python3 -c "import json; print(json.load(open('${RESULTS_PATH}/bins.json'))[$i]['mean_tc'])")
+    COUNT=$(python3   -c "import json; print(json.load(open('${RESULTS_PATH}/bins.json'))[$i]['count'])")
+    BIN_DIR="${RESULTS_PATH}/bin_${i}"
+    mkdir -p "${BIN_DIR}"
+
+    echo "Bin ${i}/${NBINS}: mean_tc=${MEAN_TC}, count=${COUNT}"
+
+    mattergen-generate "${BIN_DIR}" \
+        --model_path="${MATTERGEN_RUN_ROOT}" \
+        --batch_size="${COUNT}" \
+        --num_batches=1 \
+        --properties_to_condition_on="{'tc_supercon':${MEAN_TC}}" \
+        --diffusion_guidance_factor=2.0 \
+        --checkpoint_epoch=best \
+        --record-trajectories=False
+done
+
+# Step 3: concatenate bin outputs into a single extxyz
+cat "${RESULTS_PATH}"/bin_*/generated_crystals.extxyz \
+    > "${RESULTS_PATH}/generated_crystals.extxyz"
+echo "Concatenated ${NBINS} bin outputs -> generated_crystals.extxyz"
 
 echo "Done"
 

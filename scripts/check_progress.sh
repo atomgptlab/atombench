@@ -26,7 +26,7 @@ while [[ $# -gt 0 ]]; do
             cat <<'EOF'
 Usage: check_progress.sh [--no-color] [--once] [--interval N] [--help]
 
-Prints a pipeline status dashboard for all 12 atombench experiments.
+Prints a pipeline status dashboard for all 10 atombench experiments.
 Auto-detects whether atombench SLURM jobs are active:
   - No jobs → prints once and exits (static mode)
   - Jobs found → refreshes every REFRESH_SECS seconds (live mode, Ctrl+C exits)
@@ -72,8 +72,6 @@ declare -A JOB_TO_EXP=(
     [flow_tc]="flowmm_benchmark_jarvis"
     [mgen_alex]="mattergen_benchmark_alex"
     [mgen_tc]="mattergen_benchmark_jarvis"
-    [mgen_base_alex]="mattergen_base_benchmark_alex"
-    [mgen_base_jrv]="mattergen_base_benchmark_jarvis"
     [mgen_tc_alex]="mattergen_tc_finetune_benchmark_alex"
     [mgen_tc_jrv]="mattergen_tc_finetune_benchmark_jarvis"
 )
@@ -88,8 +86,6 @@ declare -A EXP_JOBS=(
     [flowmm_benchmark_jarvis]="flow_tc"
     [mattergen_benchmark_alex]="mgen_alex"
     [mattergen_benchmark_jarvis]="mgen_tc"
-    [mattergen_base_benchmark_alex]="mgen_base_alex"
-    [mattergen_base_benchmark_jarvis]="mgen_base_jrv"
     [mattergen_tc_finetune_benchmark_alex]="mgen_tc_alex"
     [mattergen_tc_finetune_benchmark_jarvis]="mgen_tc_jrv"
 )
@@ -104,8 +100,6 @@ declare -A SLURM_LOGS=(
     [flowmm_benchmark_jarvis]="$REPO/slurm_jarvis_flowmm_train.out $REPO/slurm_jarvis_flowmm_infer.out"
     [mattergen_benchmark_alex]="$REPO/slurm_alex_mattergen_train.out $REPO/slurm_alex_mattergen_infer.out"
     [mattergen_benchmark_jarvis]="$REPO/slurm_jarvis_mattergen_train.out $REPO/slurm_jarvis_mattergen_infer.out"
-    [mattergen_base_benchmark_alex]="$REPO/slurm_alex_mattergen_base_infer.out"
-    [mattergen_base_benchmark_jarvis]="$REPO/slurm_jarvis_mattergen_base_infer.out"
     [mattergen_tc_finetune_benchmark_alex]="$REPO/slurm_alex_mattergen_tc_finetune_train.out $REPO/slurm_alex_mattergen_tc_finetune_infer.out"
     [mattergen_tc_finetune_benchmark_jarvis]="$REPO/slurm_jarvis_mattergen_tc_finetune_train.out $REPO/slurm_jarvis_mattergen_tc_finetune_infer.out"
 )
@@ -119,8 +113,6 @@ EXPS=(
     flowmm_benchmark_jarvis
     mattergen_benchmark_alex
     mattergen_benchmark_jarvis
-    mattergen_base_benchmark_alex
-    mattergen_base_benchmark_jarvis
     mattergen_tc_finetune_benchmark_alex
     mattergen_tc_finetune_benchmark_jarvis
 )
@@ -228,14 +220,6 @@ key_artifact() {
             else
                 printf "${YLW}.ckpt found, no consolidated${RST}"
             fi
-        fi
-        ;;
-    mattergen_base_benchmark_*)
-        local extxyz="$dir/results/generated_crystals.extxyz"
-        if [[ -f "$extxyz" ]]; then
-            printf "${GRN}generated_crystals.extxyz (%d lines)${RST}" "$(wc -l < "$extxyz")"
-        else
-            printf "${DIM}no generated_crystals.extxyz${RST}"
         fi
         ;;
     mattergen_benchmark_* | mattergen_tc_finetune_benchmark_*)
@@ -381,10 +365,6 @@ section_pipeline_table() {
         case "$EXP" in
         agpt_benchmark_*)
             TRAINED_COL="${DIM}N/A${RST}"; INFERRED_COL="${DIM}N/A${RST}" ;;
-        mattergen_base_benchmark_*)
-            if [[ -f "$TRAINED_F" ]]; then TRAINED_COL="${GRN}✓${RST} $(age_str "$TRAINED_F")"
-            else TRAINED_COL="${RED}✗${RST}"; fi
-            INFERRED_COL="$(touch_status "$INFERRED_F")" ;;
         *)
             TRAINED_COL="$(touch_status "$TRAINED_F")"
             INFERRED_COL="$(touch_status "$INFERRED_F")" ;;

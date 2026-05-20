@@ -5,8 +5,6 @@ EXPS = [
     "cdvae_benchmark_jarvis",
     "flowmm_benchmark_alex",
     "flowmm_benchmark_jarvis",
-    "mattergen_benchmark_alex",
-    "mattergen_benchmark_jarvis",
     "mattergen_base_benchmark_alex",
     "mattergen_base_benchmark_jarvis",
     "mattergen_tc_finetune_benchmark_alex",
@@ -92,6 +90,20 @@ rule make_alex_data:
     shell:
         """
         dvc --cd alexandria repro
+        """
+
+rule prepare_mattergen_tc_data:
+    input:
+        "alex_data.created",
+        "jarvis_data.created",
+        "mattergen_env.created"
+    output:
+        touch("mattergen_tc_data.created")
+    shell:
+        """
+        eval "$(conda shell.bash hook)"
+        conda activate mattergen
+        python scripts/patch_mattergen_tc_caches.py
         """
 
 rule make_stats_yamls:

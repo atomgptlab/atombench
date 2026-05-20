@@ -6,7 +6,7 @@ rule train_mattergen_jarvis:
         "jarvis_data.created"
     shell:
         """
-        sbatch --wait -p nvl --time=08:00:00 job_runs/mattergen_benchmark_jarvis/train_mattergen.job
+        sbatch --wait -p nvl --time=04:00:00 job_runs/mattergen_benchmark_jarvis/train_mattergen.job
         """
 
 rule infer_mattergen_jarvis:

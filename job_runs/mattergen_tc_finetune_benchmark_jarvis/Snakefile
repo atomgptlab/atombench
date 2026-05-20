@@ -3,7 +3,8 @@ rule train_mattergen_tc_finetune_jarvis:
         touch("mattergen_tc_finetune_benchmark_jarvis.trained")
     input:
         "mattergen_env.created",
-        "jarvis_data.created"
+        "jarvis_data.created",
+        "mattergen_tc_data.created"
     shell:
         """
         sbatch --wait -p nvl --time=08:00:00 job_runs/mattergen_tc_finetune_benchmark_jarvis/train_mattergen.job
@@ -18,7 +19,7 @@ rule infer_mattergen_tc_finetune_jarvis:
         "mattergen_tc_finetune_benchmark_jarvis.trained"
     shell:
         """
-        sbatch --wait -p nvl --time=08:00:00 job_runs/mattergen_tc_finetune_benchmark_jarvis/inference_mattergen.job
+        sbatch --wait -p nvl --time=01:00:00 job_runs/mattergen_tc_finetune_benchmark_jarvis/inference_mattergen.job
         """
 
 rule benchmark_mattergen_tc_finetune_jarvis:
@@ -37,6 +38,6 @@ rule benchmark_mattergen_tc_finetune_jarvis:
         ROOT="${{ABS_PATH%/}}"
         python job_runs/mattergen_tc_finetune_benchmark_jarvis/write_benchmark.py \
             --results_path  job_runs/mattergen_tc_finetune_benchmark_jarvis/results \
-            --test_csv      "${{ROOT}}/models/cdvae/data/supercon/test.csv" \
+            --test_csv      job_runs/mattergen_tc_finetune_benchmark_jarvis/results/tc_test_sorted.csv \
             --output_csv    job_runs/mattergen_tc_finetune_benchmark_jarvis/AI-AtomGen-prop-dft_3d-test-rmse.csv
         """

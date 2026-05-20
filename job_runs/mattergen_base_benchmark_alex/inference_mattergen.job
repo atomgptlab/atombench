@@ -8,7 +8,7 @@
 
 eval "$(conda shell.bash hook)"
 source scripts/absolute_path.sh
-module load cuda/11.8
+module load cuda/11.5.0
 conda activate mattergen
 
 ROOT="${ABS_PATH%/}"
@@ -21,7 +21,7 @@ if [[ ! -f "${TEST_CSV}" ]]; then
 fi
 
 NUM_STRUCTURES=$(python -c "import pandas as pd; print(len(pd.read_csv('${TEST_CSV}')))")
-BATCH_SIZE=16
+BATCH_SIZE=64
 NUM_BATCHES=$(python -c "import math; print(math.ceil(${NUM_STRUCTURES} / ${BATCH_SIZE}))")
 
 echo "Test set size: ${NUM_STRUCTURES}, generating ${NUM_BATCHES} batches of ${BATCH_SIZE}"

@@ -82,9 +82,9 @@ This may indicate a transient Slurm/controller issue, or a permissions/config pr
   return 0
 }
 
-# ---------- 3) module load cuda/11.8 works ----------
+# ---------- 3) module load cuda/11.5.0 works ----------
 check_cuda_module() {
-  section "3) Environment Modules check (module load cuda/11.8 must work)"
+  section "3) Environment Modules check (module load cuda/11.5.0 must work)"
 
   # Many clusters define `module` as a shell function; ensure it's available.
   if ! type module >/dev/null 2>&1; then
@@ -115,11 +115,11 @@ Fix options:
 
   # Try loading CUDA 11.8
   local out rc
-  out="$(module load cuda/11.8 2>&1)"; rc=$?
+  out="$(module load cuda/11.5.0 2>&1)"; rc=$?
   if [[ $rc -eq 0 ]]; then
-    ok "module load cuda/11.8 succeeded."
+    ok "module load cuda/11.5.0 succeeded."
   else
-    fail "module load cuda/11.8 FAILED (exit code $rc).
+    fail "module load cuda/11.5.0 FAILED (exit code $rc).
 Output:
 $out
 Likely causes:
@@ -133,7 +133,7 @@ Likely causes:
   if command -v nvcc >/dev/null 2>&1; then
     ok "nvcc is now in PATH ($(command -v nvcc))."
   else
-    warn "nvcc not found in PATH even after loading cuda/11.8.
+    warn "nvcc not found in PATH even after loading cuda/11.5.0.
 This can be normal on some sites (they may only set runtime libs). If you need nvcc, check the module’s contents."
   fi
 

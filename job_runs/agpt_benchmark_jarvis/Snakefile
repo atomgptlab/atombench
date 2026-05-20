@@ -7,6 +7,6 @@ rule train_atomgpt_jarvis:
         "jarvis_data.created"
     shell:
         """
-        sbatch --wait -p a100 --time=08:00:00 --gres=gpu:1 job_runs/agpt_benchmark_jarvis/train_atomgpt.job
+        sbatch --wait -p nvl --time=08:00:00 --gres=gpu:1 job_runs/agpt_benchmark_jarvis/train_atomgpt.job
         """
 

@@ -8,7 +8,7 @@
 
 eval "$(conda shell.bash hook)"
 source scripts/wandb_api_key.sh
-module load cuda/11.8
+module load cuda/11.5.0
 conda activate flowmm
 source scripts/absolute_path.sh
 export HYDRA_FULL_ERROR="1"

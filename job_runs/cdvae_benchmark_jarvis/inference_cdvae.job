@@ -6,7 +6,7 @@
 #SBATCH --output=slurm_jarvis_cdvae_infer.out
 
 
-module load cuda/11.8
+module load cuda/11.5.0
 eval "$(conda shell.bash hook)"
 conda activate cdvae
 nvidia-smi

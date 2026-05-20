@@ -8,7 +8,7 @@
 
 eval "$(conda shell.bash hook)"
 source scripts/absolute_path.sh
-module load cuda/11.8
+module load cuda/11.5.0
 conda activate mattergen
 
 ROOT="${ABS_PATH%/}"

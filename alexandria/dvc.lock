@@ -103,5 +103,41 @@ stages:
     deps:
     - path: scripts/histogram_pie_chart.py
       hash: md5
-      md5: f406cd3f21e74079586546742d38cb28
+      md5: 921decd2131aaaa9e277afc384db75bc
       size: 10171
+  mattergen:
+    cmd: bash scripts/run_mattergen_data.sh
+    deps:
+    - path: ../models/cdvae/data/alexandria
+      hash: md5
+      md5: 718bcbb8ec400e15ba8224c2bc07c5ff.dir
+      size: 7626171
+      nfiles: 3
+    - path: scripts/run_mattergen_data.sh
+      hash: md5
+      md5: ce0711ea06a1ecd812aad9a6045ad609
+      size: 590
+    outs:
+    - path: ../models/mattergen/datasets/cache/alex_atombench
+      hash: md5
+      md5: c2d33ae63ac3f2805dc7ded2e0a8c6be.dir
+      size: 2284672
+      nfiles: 15
+  mattergen_tc:
+    cmd: bash scripts/run_mattergen_data_tc.sh
+    deps:
+    - path: ../models/cdvae/data/alexandria
+      hash: md5
+      md5: 718bcbb8ec400e15ba8224c2bc07c5ff.dir
+      size: 7626171
+      nfiles: 3
+    - path: scripts/run_mattergen_data_tc.sh
+      hash: md5
+      md5: 8cd246a529960f2065fde0e18f540baf
+      size: 1130
+    outs:
+    - path: ../models/mattergen/datasets/cache/alex_atombench_tc
+      hash: md5
+      md5: c2d33ae63ac3f2805dc7ded2e0a8c6be.dir
+      size: 2284672
+      nfiles: 15

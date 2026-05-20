@@ -27,7 +27,7 @@ python -c 'import sys; print(sys.version)'
 pip --version || (echo "pip missing after activation"; exit 1)
 
 pip install uv
-module load cuda/11.8 2>/dev/null || true
+module load cuda/11.5.0 2>/dev/null || true
 uv pip install -e .
 
 echo "Downloading mattergen_base checkpoint from HuggingFace..."
