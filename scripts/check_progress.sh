@@ -84,8 +84,8 @@ declare -A EXP_JOBS=(
     [cdvae_benchmark_jarvis]="cdvae_jarvis cdvae_tc"
     [flowmm_benchmark_alex]="flow_alex"
     [flowmm_benchmark_jarvis]="flow_tc"
-    [mattergen_benchmark_alex]="mgen_alex"
-    [mattergen_benchmark_jarvis]="mgen_tc"
+    [mattergen_base_benchmark_alex]="mgen_alex"
+    [mattergen_base_benchmark_jarvis]="mgen_tc"
     [mattergen_tc_finetune_benchmark_alex]="mgen_tc_alex"
     [mattergen_tc_finetune_benchmark_jarvis]="mgen_tc_jrv"
 )
@@ -98,8 +98,8 @@ declare -A SLURM_LOGS=(
     [cdvae_benchmark_jarvis]="$REPO/slurm_jarvis_cdvae_train.out $REPO/slurm_jarvis_cdvae_infer.out $REPO/slurm_jarvis_cdvae_benchmark.out"
     [flowmm_benchmark_alex]="$REPO/slurm_alex_flowmm_train.out $REPO/slurm_alex_flowmm_infer.out"
     [flowmm_benchmark_jarvis]="$REPO/slurm_jarvis_flowmm_train.out $REPO/slurm_jarvis_flowmm_infer.out"
-    [mattergen_benchmark_alex]="$REPO/slurm_alex_mattergen_train.out $REPO/slurm_alex_mattergen_infer.out"
-    [mattergen_benchmark_jarvis]="$REPO/slurm_jarvis_mattergen_train.out $REPO/slurm_jarvis_mattergen_infer.out"
+    [mattergen_base_benchmark_alex]="$REPO/slurm_alex_mattergen_train.out $REPO/slurm_alex_mattergen_infer.out"
+    [mattergen_base_benchmark_jarvis]="$REPO/slurm_jarvis_mattergen_train.out $REPO/slurm_jarvis_mattergen_infer.out"
     [mattergen_tc_finetune_benchmark_alex]="$REPO/slurm_alex_mattergen_tc_finetune_train.out $REPO/slurm_alex_mattergen_tc_finetune_infer.out"
     [mattergen_tc_finetune_benchmark_jarvis]="$REPO/slurm_jarvis_mattergen_tc_finetune_train.out $REPO/slurm_jarvis_mattergen_tc_finetune_infer.out"
 )
@@ -111,8 +111,8 @@ EXPS=(
     cdvae_benchmark_jarvis
     flowmm_benchmark_alex
     flowmm_benchmark_jarvis
-    mattergen_benchmark_alex
-    mattergen_benchmark_jarvis
+    mattergen_base_benchmark_alex
+    mattergen_base_benchmark_jarvis
     mattergen_tc_finetune_benchmark_alex
     mattergen_tc_finetune_benchmark_jarvis
 )

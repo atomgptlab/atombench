@@ -86,9 +86,11 @@ for i in $(seq 0 $((NBINS - 1))); do
         --record-trajectories=False
 done
 
-# Step 3: concatenate bin outputs into a single extxyz
-cat "${RESULTS_PATH}"/bin_*/generated_crystals.extxyz \
-    > "${RESULTS_PATH}/generated_crystals.extxyz"
+# Step 3: concatenate bin outputs in numeric order (glob sorts lexicographically, which
+# breaks for bin_10 < bin_2; seq-based loop preserves correct TC-sorted pairing)
+for i in $(seq 0 $((NBINS - 1))); do
+    cat "${RESULTS_PATH}/bin_${i}/generated_crystals.extxyz"
+done > "${RESULTS_PATH}/generated_crystals.extxyz"
 echo "Concatenated ${NBINS} bin outputs -> generated_crystals.extxyz"
 
 echo "Done"

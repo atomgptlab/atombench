@@ -27,6 +27,7 @@ def ase_to_poscar_string(ase_atoms) -> str:
             "elements": [str(s) for s in pmg.species],
             "coords": pmg.frac_coords.tolist(),
             "cartesian": False,
+            "props": {},
         }
     )
     return Poscar(jarvis_atoms).to_string().replace("\n", r"\n")
@@ -40,6 +41,7 @@ def cif_to_poscar_string(cif_str: str) -> str:
             "elements": [str(s) for s in pmg.species],
             "coords": pmg.frac_coords.tolist(),
             "cartesian": False,
+            "props": {},
         }
     )
     return Poscar(jarvis_atoms).to_string().replace("\n", r"\n")
