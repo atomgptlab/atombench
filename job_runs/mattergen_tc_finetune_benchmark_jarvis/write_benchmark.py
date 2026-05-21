@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pandas as pd
 from ase.io import read as ase_read
-from jarvis.core.atoms import Atoms as JAtoms
+from jarvis.core.atoms import pmg_to_atoms
 from jarvis.io.vasp.inputs import Poscar
 from pymatgen.core.structure import Structure
 from pymatgen.io.ase import AseAtomsAdaptor
@@ -21,30 +21,12 @@ from tqdm import tqdm
 
 def ase_to_poscar_string(ase_atoms) -> str:
     pmg = AseAtomsAdaptor.get_structure(ase_atoms)
-    jarvis_atoms = JAtoms.from_dict(
-        {
-            "lattice_mat": pmg.lattice.matrix.tolist(),
-            "elements": [str(s) for s in pmg.species],
-            "coords": pmg.frac_coords.tolist(),
-            "cartesian": False,
-            "props": {},
-        }
-    )
-    return Poscar(jarvis_atoms).to_string().replace("\n", r"\n")
+    return Poscar(pmg_to_atoms(pmg)).to_string().replace("\n", r"\n")
 
 
 def cif_to_poscar_string(cif_str: str) -> str:
     pmg = Structure.from_str(cif_str, fmt="cif")
-    jarvis_atoms = JAtoms.from_dict(
-        {
-            "lattice_mat": pmg.lattice.matrix.tolist(),
-            "elements": [str(s) for s in pmg.species],
-            "coords": pmg.frac_coords.tolist(),
-            "cartesian": False,
-            "props": {},
-        }
-    )
-    return Poscar(jarvis_atoms).to_string().replace("\n", r"\n")
+    return Poscar(pmg_to_atoms(pmg)).to_string().replace("\n", r"\n")
 
 
 def main():
