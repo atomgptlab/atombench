@@ -54,7 +54,9 @@ mattergen-finetune \
     data_module=alex_atombench_tc \
     "+lightning_module/diffusion_module/model/property_embeddings@adapter.adapter.property_embeddings_adapt.tc_supercon=tc_supercon" \
     ~trainer.logger \
-    "data_module.properties=[tc_supercon]"
+    "data_module.properties=[tc_supercon]" \
+    ++csp_loss=true \
+    trainer.accumulate_grad_batches=4
 
 echo "Done"
 

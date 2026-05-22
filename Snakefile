@@ -7,6 +7,8 @@ EXPS = [
     "flowmm_benchmark_jarvis",
     "mattergen_base_benchmark_alex",
     "mattergen_base_benchmark_jarvis",
+    "mattergen_stoich_benchmark_alex",
+    "mattergen_stoich_benchmark_jarvis",
     "mattergen_tc_finetune_benchmark_alex",
     "mattergen_tc_finetune_benchmark_jarvis",
 ]
@@ -25,7 +27,8 @@ rule all:
         "benchmarks.verified",
         "grid_charts.created",
         "rmse_chart.made",
-        "crystal_system_mae_charts.created"
+        "crystal_system_mae_charts.created",
+        "match_rate_chart.made"
 
 rule make_atomgpt_env:
     output:
@@ -182,4 +185,12 @@ rule make_rmse_chart:
         touch("rmse_chart.made")
     shell:
         "cd job_runs/ && python ../scripts/rmse_bar_chart.py"
+
+rule make_match_rate_chart:
+    input:
+        "metrics.computed"
+    output:
+        touch("match_rate_chart.made")
+    shell:
+        "cd job_runs/ && python ../scripts/match_rate_bar_chart.py"
 

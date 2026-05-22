@@ -36,13 +36,14 @@ mpl.rcParams.update({
 WVU_BLUE = "#002855"  # target
 WVU_GOLD = "#EEAA00"  # predicted
 
-MODELS = ["agpt", "cdvae", "flowmm", "mattergen_base", "mattergen_tc_finetune", "mattergen"]
+MODELS = ["agpt", "cdvae", "flowmm", "mattergen_base", "mattergen_stoich", "mattergen_tc_finetune", "mattergen"]
 MODEL_LABEL = {
     "agpt":                  "AtomGPT",
     "cdvae":                 "CDVAE",
     "flowmm":                "FlowMM",
     "mattergen_base":        "MatterGen\nBase",
-    "mattergen_tc_finetune": "MatterGen\nTC Finetune",
+    "mattergen_stoich":      "MatterGen\nStoich",
+    "mattergen_tc_finetune": "MatterGen\nTC+Stoich",
     "mattergen":             "MatterGen\nFinetuned",
 }
 PARAMS = ["a", "c", "gamma"]
@@ -179,53 +180,60 @@ def plot_dataset_grid(tag: str,
                       title: str,
                       bins_a_c: np.ndarray,
                       bins_gamma: np.ndarray) -> None:
-    """Build a 3×3 grid for one dataset tag ('alex' or 'jarvis')."""
+    """Build a grid for one dataset tag ('alex' or 'jarvis').
+    Rows with no usable CSV data are silently omitted."""
     model_dirs = discover_model_dirs(root, tag)
 
-    # Smaller, tighter figure. We'll control margins to keep the right-side ylabel
-    # clearly separated from the panels (no overlap).
-    n_models = len(MODELS)
+    # Pre-filter: only keep models that have at least one param with data
+    active_models: List[str] = []
+    model_series: Dict[str, Dict] = {}
+    model_klds: Dict[str, Dict] = {}
+    for model in MODELS:
+        bench_dir = model_dirs.get(model)
+        if not bench_dir:
+            continue
+        csv_path = find_benchmark_csv(bench_dir)
+        if not csv_path:
+            continue
+        series = extract_series(csv_path)
+        if not any(series["target"][p] for p in PARAMS):
+            continue
+        active_models.append(model)
+        model_series[model] = series
+        mfp = bench_dir / "metrics.json"
+        model_klds[model] = load_klds(mfp) if mfp.exists() else {}
+
+    if not active_models:
+        print(f"⚠️  No data found for tag={tag!r} – skipping {out_png.name}")
+        return
+
+    n_models = len(active_models)
     fig, axes = plt.subplots(n_models, 3, figsize=(9, 2.8 * n_models))
+    if n_models == 1:
+        axes = axes[np.newaxis, :]  # keep 2-D indexing consistent
+
     # remove all y-axis labels and tick labels
     for ax in axes.ravel():
-        ax.set_ylabel("")                                # kill axis label
+        ax.set_ylabel("")
         ax.tick_params(axis="y", which="both",
-                    left=False, right=False,          # no tick marks
-                    labelleft=False, labelright=False)  # no numbers
+                       left=False, right=False,
+                       labelleft=False, labelright=False)
     fig.subplots_adjust(
         left=0.08, right=0.88, bottom=0.12, top=0.86,
         wspace=0.10, hspace=0.30
     )
 
-    # column titles — extra salient
-    #for c, p in enumerate(PARAMS):
-        #axes[0, c].set_title(PARAM_LABEL[p], fontsize=18, pad=7)
-
-    for r, model in enumerate(MODELS):
+    for r, model in enumerate(active_models):
         axrow = axes[r]
         label = MODEL_LABEL[model]
-        bench_dir = model_dirs.get(model)
-
-        series = None
-        klds = {}
-        if bench_dir:
-            csv_path = find_benchmark_csv(bench_dir)
-            if csv_path:
-                series = extract_series(csv_path)
-            mfp = bench_dir / "metrics.json"
-            if mfp.exists():
-                klds = load_klds(mfp)
+        series = model_series[model]
+        klds = model_klds[model]
 
         for c, param in enumerate(PARAMS):
             ax = axrow[c]
             annotate_panel_label(ax, PANEL_LETTERS[r*3 + c])
             if c == 0:
                 ax.set_ylabel(label, fontsize=22)
-
-            if series is None or not series["target"][param] or not series["predicted"][param]:
-                ax.text(0.5, 0.5, "no data", ha="center", va="center", fontsize=12, alpha=0.7)
-                ax.set_xticks([]); ax.set_yticks([])
-                continue
 
             xt = np.asarray(series["target"][param], dtype=float)
             xp = np.asarray(series["predicted"][param], dtype=float)
@@ -234,7 +242,6 @@ def plot_dataset_grid(tag: str,
             wt_t = _weights_percent(len(xt))
             wt_p = _weights_percent(len(xp))
 
-            # Less “rectangular”: stepfilled with rounded joins; no edges.
             ax.hist(xt, bins=bins, weights=wt_t,
                     histtype="stepfilled", alpha=0.68, color=WVU_BLUE,
                     edgecolor="none", label="target")
@@ -242,10 +249,10 @@ def plot_dataset_grid(tag: str,
                     histtype="stepfilled", alpha=0.68, color=WVU_GOLD,
                     edgecolor="none", label="predicted")
 
-            if r == len(MODELS) - 1:
+            if r == n_models - 1:
                 ax.set_xlabel(PARAM_LABEL[param], fontsize=14)
 
-            style_axes(ax, left_col=(c == 0), bottom_row=(r == len(MODELS) - 1))
+            style_axes(ax, left_col=(c == 0), bottom_row=(r == n_models - 1))
             annotate_kld(ax, klds.get(param))
 
     # single legend (clear & compact)

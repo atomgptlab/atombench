@@ -52,6 +52,9 @@ def main():
     n_gen = len(generated)
     print(f"Generated {n_gen} structures, test set size {n_test}")
 
+    if n_gen == 0:
+        raise RuntimeError(f"No structures found in {extxyz_path} — inference likely failed.")
+
     if n_gen < n_test:
         print(f"WARNING: only {n_gen} generated structures for {n_test} test samples; "
               "some predictions will be missing")

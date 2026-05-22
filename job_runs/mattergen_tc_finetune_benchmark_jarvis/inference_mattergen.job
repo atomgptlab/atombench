@@ -5,9 +5,10 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --output=slurm_jarvis_mattergen_tc_finetune_infer.out
 
+set -e
 
 eval "$(conda shell.bash hook)"
-module load cuda/11.5.0
+module load cuda/11.5.0 || true
 conda activate mattergen
 
 ROOT="$(realpath .)"
@@ -61,6 +62,21 @@ for i in range(0, len(tc_rows), bs):
 with open(os.path.join(out_dir, "bins.json"), "w") as f:
     json.dump(bins, f)
 
+# Extract per-structure compositions for stoichiometry conditioning
+from pymatgen.core.structure import Structure
+bin_compositions = []
+for i in range(0, len(tc_rows), bs):
+    batch = tc_rows[i : i + bs]
+    comps = []
+    for r in batch:
+        struct = Structure.from_str(r["cif"], fmt="cif")
+        comp = {el: int(cnt) for el, cnt in struct.composition.as_dict().items()}
+        comps.append(comp)
+    bin_compositions.append(comps)
+
+with open(os.path.join(out_dir, "bin_compositions.json"), "w") as f:
+    json.dump(bin_compositions, f)
+
 print(f"TC rows: {len(tc_rows)}, bins: {len(bins)}")
 PYEOF
 
@@ -76,19 +92,29 @@ for i in $(seq 0 $((NBINS - 1))); do
 
     echo "Bin ${i}/${NBINS}: mean_tc=${MEAN_TC}, count=${COUNT}"
 
+    COMPOSITIONS=$(python3 -c "
+import json
+with open('${RESULTS_PATH}/bin_compositions.json') as f:
+    data = json.load(f)
+print(repr(data[$i]))
+")
+
     mattergen-generate "${BIN_DIR}" \
         --model_path="${MATTERGEN_RUN_ROOT}" \
         --batch_size="${COUNT}" \
         --num_batches=1 \
+        --sampling-config-name=csp \
         --properties_to_condition_on="{'tc_supercon':${MEAN_TC}}" \
+        --target_compositions="${COMPOSITIONS}" \
         --diffusion_guidance_factor=2.0 \
-        --checkpoint_epoch=best \
+        --checkpoint_epoch=last \
         --record-trajectories=False
 done
 
-# Step 3: concatenate bin outputs into a single extxyz
-cat "${RESULTS_PATH}"/bin_*/generated_crystals.extxyz \
-    > "${RESULTS_PATH}/generated_crystals.extxyz"
+# Step 3: concatenate bin outputs in numeric order
+for i in $(seq 0 $((NBINS - 1))); do
+    cat "${RESULTS_PATH}/bin_${i}/generated_crystals.extxyz"
+done > "${RESULTS_PATH}/generated_crystals.extxyz"
 echo "Concatenated ${NBINS} bin outputs -> generated_crystals.extxyz"
 
 echo "Done"

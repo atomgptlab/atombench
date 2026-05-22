@@ -47,8 +47,10 @@ bnchmk_name_dict = {
     "mattergen_benchmark_jarvis":       "MatterGen Finetuned JARVIS",
     "mattergen_base_benchmark_alex":         "MatterGen Base Alexandria",
     "mattergen_base_benchmark_jarvis":       "MatterGen Base JARVIS",
-    "mattergen_tc_finetune_benchmark_alex":  "MatterGen TC Finetune Alexandria",
-    "mattergen_tc_finetune_benchmark_jarvis":"MatterGen TC Finetune JARVIS",
+    "mattergen_stoich_benchmark_alex":       "MatterGen Stoich Alexandria",
+    "mattergen_stoich_benchmark_jarvis":     "MatterGen Stoich JARVIS",
+    "mattergen_tc_finetune_benchmark_alex":  "MatterGen TC+Stoich Alexandria",
+    "mattergen_tc_finetune_benchmark_jarvis":"MatterGen TC+Stoich JARVIS",
 }
 
 ax_label_map = {

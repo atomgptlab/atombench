@@ -50,18 +50,21 @@ bnchmk_name_dict = {
     "mattergen_benchmark_jarvis":       "MatterGen Finetuned JARVIS",
     "mattergen_base_benchmark_alex":         "MatterGen Base Alexandria",
     "mattergen_base_benchmark_jarvis":       "MatterGen Base JARVIS",
-    "mattergen_tc_finetune_benchmark_alex":  "MatterGen TC Finetune Alexandria",
-    "mattergen_tc_finetune_benchmark_jarvis":"MatterGen TC Finetune JARVIS",
+    "mattergen_stoich_benchmark_alex":       "MatterGen Stoich Alexandria",
+    "mattergen_stoich_benchmark_jarvis":     "MatterGen Stoich JARVIS",
+    "mattergen_tc_finetune_benchmark_alex":  "MatterGen TC+Stoich Alexandria",
+    "mattergen_tc_finetune_benchmark_jarvis":"MatterGen TC+Stoich JARVIS",
 }
 
 def infer_model(name: str) -> str:
     name = name.lower()
-    if name.startswith("agpt_"):                 return "AtomGPT"
-    if name.startswith("cdvae_"):                return "CDVAE"
-    if name.startswith("flowmm_"):               return "FlowMM"
-    if name.startswith("mattergen_tc_finetune_"): return "MatterGen TC Finetune"
-    if name.startswith("mattergen_base_"):        return "MatterGen Base"
-    if name.startswith("mattergen_"):             return "MatterGen Finetuned"
+    if name.startswith("agpt_"):                  return "AtomGPT"
+    if name.startswith("cdvae_"):                 return "CDVAE"
+    if name.startswith("flowmm_"):                return "FlowMM"
+    if name.startswith("mattergen_tc_finetune_"): return "MatterGen TC+Stoich"
+    if name.startswith("mattergen_stoich_"):       return "MatterGen Stoich"
+    if name.startswith("mattergen_base_"):         return "MatterGen Base"
+    if name.startswith("mattergen_"):              return "MatterGen Finetuned"
     return "Other"
 
 # Try preferred RMSE key; fallback to a scalar RMSE if present
@@ -89,13 +92,14 @@ plot_df = (
 
 # ───────────────────── colors by model (3 colors) ─────────────────────
 model_colors = {
-    "AtomGPT":           "#1f77b4",  # tab:blue
-    "CDVAE":             "#ff7f0e",  # tab:orange
-    "FlowMM":            "#2ca02c",  # tab:green
-    "MatterGen Finetuned":   "#d62728",  # tab:red
-    "MatterGen Base":        "#9467bd",  # tab:purple
-    "MatterGen TC Finetune": "#8c564b",  # tab:brown
-    "Other":                 "#7f7f7f",
+    "AtomGPT":              "#1f77b4",  # tab:blue
+    "CDVAE":                "#ff7f0e",  # tab:orange
+    "FlowMM":               "#2ca02c",  # tab:green
+    "MatterGen Finetuned":  "#d62728",  # tab:red
+    "MatterGen Base":       "#9467bd",  # tab:purple
+    "MatterGen Stoich":     "#8c564b",  # tab:brown
+    "MatterGen TC+Stoich":  "#e377c2",  # tab:pink
+    "Other":                "#7f7f7f",
 }
 plot_df["color"] = plot_df["model"].map(model_colors)
 
@@ -139,6 +143,8 @@ handles = [
     mpatches.Patch(color=model_colors["FlowMM"],              label="FlowMM"),
     mpatches.Patch(color=model_colors["MatterGen Finetuned"], label="MatterGen Finetuned"),
     mpatches.Patch(color=model_colors["MatterGen Base"],      label="MatterGen Base"),
+    mpatches.Patch(color=model_colors["MatterGen Stoich"],    label="MatterGen Stoich"),
+    mpatches.Patch(color=model_colors["MatterGen TC+Stoich"], label="MatterGen TC+Stoich"),
 ]
 ax.legend(handles=handles, title_fontsize=15, fontsize=15)
 
