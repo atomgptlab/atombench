@@ -62,19 +62,19 @@ PARAMS_ALL = ("a", "b", "c", "alpha", "beta", "gamma")
 
 # ── Model metadata (benchmark display names, ordering, colors) ─────────────────
 BENCHMARK_DISPLAY_NAMES: Dict[str, str] = {
-    "agpt_benchmark_alex":               "AtomGPT Alexandria",
+    "agpt_benchmark_alex":               "AtomGPT Alex",
     "agpt_benchmark_jarvis":             "AtomGPT JARVIS",
-    "cdvae_benchmark_alex":              "CDVAE Alexandria",
+    "cdvae_benchmark_alex":              "CDVAE Alex",
     "cdvae_benchmark_jarvis":            "CDVAE JARVIS",
-    "flowmm_benchmark_alex":             "FlowMM Alexandria",
+    "flowmm_benchmark_alex":             "FlowMM Alex",
     "flowmm_benchmark_jarvis":           "FlowMM JARVIS",
-    "agpt_stoich_benchmark_alex":        "AtomGPT Tc Alexandria",
+    "agpt_stoich_benchmark_alex":        "AtomGPT Tc Alex",
     "agpt_stoich_benchmark_jarvis":      "AtomGPT Tc JARVIS",
-    "mattergen_stoich_benchmark_alex":   "MatterGen Alexandria",
+    "mattergen_stoich_benchmark_alex":   "MatterGen Alex",
     "mattergen_stoich_benchmark_jarvis": "MatterGen JARVIS",
-    "mattergen_tc_finetune_benchmark_alex":  "MatterGen Tc Alexandria",
+    "mattergen_tc_finetune_benchmark_alex":  "MatterGen Tc Alex",
     "mattergen_tc_finetune_benchmark_jarvis": "MatterGen Tc JARVIS",
-    "mattergen_benchmark_alex":          "MatterGen Finetuned Alexandria",
+    "mattergen_benchmark_alex":          "MatterGen Finetuned Alex",
     "mattergen_benchmark_jarvis":        "MatterGen Finetuned JARVIS",
 }
 
@@ -179,15 +179,18 @@ def _build_metrics_df(
     benchmarks: List[Tuple[str, Path, Optional[Path], Optional[dict]]],
     display_names: Dict[str, str],
 ) -> pd.DataFrame:
-    """Flatten all metrics dicts into a single DataFrame, applying display names."""
+    """Flatten all metrics dicts into a single DataFrame.
+
+    benchmark_name is stored as the raw directory key so that infer_model and
+    ICE_ORDER lookups work correctly.  Display-name mapping is applied at render
+    time inside each individual plot function.
+    """
     rows = []
     for name, _, _, metrics in benchmarks:
         if metrics is None:
             continue
         m = dict(metrics)
-        m["benchmark_name"] = display_names.get(
-            m.get("benchmark_name", name), m.get("benchmark_name", name)
-        )
+        m["benchmark_name"] = name   # always the raw directory key
         rows.append(pd.json_normalize(m, sep=".", max_level=3).iloc[0].to_dict())
     return pd.DataFrame(rows) if rows else pd.DataFrame()
 
@@ -344,13 +347,21 @@ def plot_distribution(bench_name: str, csv_path: Path, outdir: Path) -> None:
     print(f"✓ {out_png.name}")
 
 
-def plot_kld_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
+def plot_kld_bar_chart(
+    df: pd.DataFrame, outdir: Path,
+    display_names: Optional[Dict[str, str]] = None,
+) -> None:
+    dn = display_names if display_names is not None else BENCHMARK_DISPLAY_NAMES
     kld_cols = [f"KLD.{k}" for k in PARAMS_ALL]
     if any(c not in df.columns for c in kld_cols):
         print("⚠  Missing KLD columns — skipping KLD bar chart", file=sys.stderr)
         return
     kld_df = (df.set_index("benchmark_name")[kld_cols]
                 .rename(columns=lambda c: AX_LABEL_MAP[c.split(".")[-1]]))
+    ice_keys = [k for k in ICE_ORDER if k in kld_df.index]
+    if ice_keys:
+        kld_df = kld_df.reindex(ice_keys)
+    kld_df.index = [dn.get(n, n) for n in kld_df.index]
     fig, ax = plt.subplots(figsize=(10, 8))
     kld_df.plot(kind="bar", edgecolor="k", linewidth=0.8, ax=ax)
     _style_bar_axes(ax, "KL Divergence (Nats)",
@@ -360,7 +371,11 @@ def plot_kld_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
     print("✓ comparison_bar_chart.png")
 
 
-def plot_mae_abc_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
+def plot_mae_abc_bar_chart(
+    df: pd.DataFrame, outdir: Path,
+    display_names: Optional[Dict[str, str]] = None,
+) -> None:
+    dn = display_names if display_names is not None else BENCHMARK_DISPLAY_NAMES
     for cand in ([f"MAE.average_mae.{k}" for k in PARAMS_ALL],
                  [f"MAE.{k}" for k in PARAMS_ALL]):
         if all(c in df.columns for c in cand):
@@ -371,6 +386,10 @@ def plot_mae_abc_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
         return
     mae_df = (df.set_index("benchmark_name")[mae_cols]
                 .rename(columns=lambda c: AX_LABEL_MAP[c.split(".")[-1]]))
+    ice_keys = [k for k in ICE_ORDER if k in mae_df.index]
+    if ice_keys:
+        mae_df = mae_df.reindex(ice_keys)
+    mae_df.index = [dn.get(n, n) for n in mae_df.index]
     length_cols = [AX_LABEL_MAP[k] for k in ("a", "b", "c")]
     fig, ax = plt.subplots(figsize=(10, 8))
     mae_df[length_cols].plot(kind="bar", edgecolor="k", linewidth=0.8, ax=ax)
@@ -380,7 +399,11 @@ def plot_mae_abc_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
     print("✓ mae_bar_chart_abc.png")
 
 
-def plot_mae_angles_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
+def plot_mae_angles_bar_chart(
+    df: pd.DataFrame, outdir: Path,
+    display_names: Optional[Dict[str, str]] = None,
+) -> None:
+    dn = display_names if display_names is not None else BENCHMARK_DISPLAY_NAMES
     for cand in ([f"MAE.average_mae.{k}" for k in PARAMS_ALL],
                  [f"MAE.{k}" for k in PARAMS_ALL]):
         if all(c in df.columns for c in cand):
@@ -390,6 +413,10 @@ def plot_mae_angles_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
         return
     mae_df = (df.set_index("benchmark_name")[mae_cols]
                 .rename(columns=lambda c: AX_LABEL_MAP[c.split(".")[-1]]))
+    ice_keys = [k for k in ICE_ORDER if k in mae_df.index]
+    if ice_keys:
+        mae_df = mae_df.reindex(ice_keys)
+    mae_df.index = [dn.get(n, n) for n in mae_df.index]
     angle_cols = [AX_LABEL_MAP[k] for k in ("alpha", "beta", "gamma")]
     fig, ax = plt.subplots(figsize=(10, 8))
     mae_df[angle_cols].plot(kind="bar", edgecolor="k", linewidth=0.8,
@@ -947,10 +974,10 @@ def main(argv=None) -> None:
     if not df_metrics.empty and ("kld" in only or "mae" in only):
         print("\n── KLD / MAE bar charts")
         if "kld" in only:
-            plot_kld_bar_chart(df_metrics, outdir)
+            plot_kld_bar_chart(df_metrics, outdir, display_names)
         if "mae" in only:
-            plot_mae_abc_bar_chart(df_metrics, outdir)
-            plot_mae_angles_bar_chart(df_metrics, outdir)
+            plot_mae_abc_bar_chart(df_metrics, outdir, display_names)
+            plot_mae_angles_bar_chart(df_metrics, outdir, display_names)
 
     # ── RMSE bar chart ────────────────────────────────────────────────────────
     if not df_metrics.empty and "rmse" in only:
