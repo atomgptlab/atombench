@@ -174,7 +174,7 @@ rule collect_all_figures:
         cp atombench_output/figures/mae_bar_chart_abc.png       all_figures/comparison/
         cp atombench_output/figures/mae_bar_chart_angles.png    all_figures/comparison/
         cp atombench_output/figures/rmse_bar_chart.png          all_figures/comparison/
-        cp atombench_output/figures/ccrmse_bar_chart.png        all_figures/comparison/
+        cp atombench_output/figures/ccrmsd_bar_chart.png        all_figures/comparison/
         cp atombench_output/figures/match_rate_bar_chart.png    all_figures/comparison/
         find atombench_output/figures -maxdepth 1 -name '*_distribution.png' \
             -exec cp {{}} all_figures/distributions/ \\;

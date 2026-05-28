@@ -68,8 +68,8 @@ BENCHMARK_DISPLAY_NAMES: Dict[str, str] = {
     "cdvae_benchmark_jarvis":            "CDVAE JARVIS",
     "flowmm_benchmark_alex":             "FlowMM Alexandria",
     "flowmm_benchmark_jarvis":           "FlowMM JARVIS",
-    "agpt_stoich_benchmark_alex":        "AtomGPT Alexandria",
-    "agpt_stoich_benchmark_jarvis":      "AtomGPT JARVIS",
+    "agpt_stoich_benchmark_alex":        "AtomGPT Tc Alexandria",
+    "agpt_stoich_benchmark_jarvis":      "AtomGPT Tc JARVIS",
     "mattergen_stoich_benchmark_alex":   "MatterGen Alexandria",
     "mattergen_stoich_benchmark_jarvis": "MatterGen JARVIS",
     "mattergen_tc_finetune_benchmark_alex":  "MatterGen Tc Alexandria",
@@ -91,7 +91,7 @@ ICE_ORDER = [
 
 def infer_model(name: str) -> str:
     n = name.lower()
-    if n.startswith("agpt_stoich_"):            return "AtomGPT"
+    if n.startswith("agpt_stoich_"):            return "AtomGPT Tc"
     if n.startswith("agpt_"):                   return "AtomGPT"
     if n.startswith("cdvae_"):                  return "CDVAE"
     if n.startswith("flowmm_"):                 return "FlowMM"
@@ -103,6 +103,7 @@ def infer_model(name: str) -> str:
 
 MODEL_COLORS: Dict[str, str] = {
     "AtomGPT":             "#1f77b4",   # tab:blue
+    "AtomGPT Tc":          "#aec7e8",   # light blue
     "CDVAE":               "#ff7f0e",   # tab:orange
     "FlowMM":              "#2ca02c",   # tab:green
     "MatterGen Finetuned": "#d62728",   # tab:red
@@ -119,7 +120,7 @@ def _darken(hex_color: str, factor: float = 0.65) -> str:
     return f"#{int(r*factor):02x}{int(g*factor):02x}{int(b*factor):02x}"
 
 
-CCRMSE_MODEL_COLORS: Dict[str, str] = {k: _darken(v) for k, v in MODEL_COLORS.items()}
+CCRMSD_MODEL_COLORS: Dict[str, str] = {k: _darken(v) for k, v in MODEL_COLORS.items()}
 
 # ── Pymatgen / Niggli helpers ──────────────────────────────────────────────────
 @lru_cache(maxsize=20000)
@@ -417,18 +418,18 @@ def plot_rmse_bar_chart(
     print("⚠  No RMSE column found — skipping RMSE bar chart", file=sys.stderr)
 
 
-def plot_ccrmse_bar_chart(
+def plot_ccrmsd_bar_chart(
     df: pd.DataFrame, outdir: Path, display_names: Optional[Dict[str, str]] = None
 ) -> None:
     dn = display_names if display_names is not None else BENCHMARK_DISPLAY_NAMES
-    if "ccRMSE.value" not in df.columns:
-        print("⚠  'ccRMSE.value' not in metrics — skipping ccRMSE bar chart", file=sys.stderr)
+    if "ccRMSD.value" not in df.columns:
+        print("⚠  'ccRMSD.value' not in metrics — skipping ccRMSD bar chart", file=sys.stderr)
         return
     _model_bar_chart(
-        df, "ccRMSE.value", outdir, "ccrmse_bar_chart.png",
-        "AMD-RMSE (Å)",
-        "Continuous Corrected RMSE\nfor Predicted vs. Target Structures",
-        CCRMSE_MODEL_COLORS, dn,
+        df, "ccRMSD.value", outdir, "ccrmsd_bar_chart.png",
+        "AMD-RMSD (Å)",
+        "Continuous Corrected RMSD\nfor Predicted vs. Target Structures",
+        CCRMSD_MODEL_COLORS, dn,
     )
 
 
@@ -620,7 +621,14 @@ def plot_group_grid(group_cfg: dict, root: Path, outdir: Path) -> None:
         klds:   Dict[str, float] = {}
 
         if bench_dir.is_dir():
-            csv_path = find_benchmark_csv(bench_dir)
+            csv_path = next(
+                (p for p in bench_dir.iterdir() if p.suffix.lower() == ".csv"
+                 and {"id","target","prediction"}.issubset(
+                     {c.strip().lower() for c in
+                      (next(iter(csv_mod.DictReader(p.open("r", errors="replace"))), {}) or {}).keys()}
+                 )),
+                None,
+            )
             if csv_path:
                 series = _extract(csv_path)
             mfp = bench_dir / "metrics.json"
@@ -695,8 +703,176 @@ def plot_group_grid(group_cfg: dict, root: Path, outdir: Path) -> None:
     print(f"✓ {out_png.name}")
 
 
+# ── Reconstruction grid (N rows × 3 cols: a, c, γ) ───────────────────────────
+_GRID_MODELS = [
+    "cdvae",
+    "agpt_stoich",
+    "mattergen_stoich",
+    "mattergen_tc_finetune",
+    "agpt",
+    "flowmm",
+]
+_GRID_MODEL_LABEL = {
+    "agpt":                  "AtomGPT",
+    "agpt_stoich":           "AtomGPT Tc",
+    "cdvae":                 "CDVAE",
+    "flowmm":                "FlowMM",
+    "mattergen_stoich":      "MatterGen",
+    "mattergen_tc_finetune": "MatterGen Tc",
+}
+
+
+def _unescape(s: str) -> str:
+    return s.replace("\r\n", "\n").replace("\r", "\n").replace("\\n", "\n").strip()
+
+
+def _find_grid_csv(bench_dir: Path) -> Optional[Path]:
+    for p in bench_dir.iterdir():
+        if p.suffix.lower() != ".csv":
+            continue
+        try:
+            with p.open("r", newline="", encoding="utf-8", errors="replace") as fh:
+                fields = {c.strip().lower() for c in (csv_mod.DictReader(fh).fieldnames or [])}
+                if {"id", "target", "prediction"}.issubset(fields):
+                    return p
+        except Exception:
+            continue
+    return None
+
+
+def _extract_grid_series(csv_path: Path) -> Dict[str, Dict[str, List[float]]]:
+    out: Dict[str, Dict[str, List[float]]] = {
+        "target":    {k: [] for k in PARAMS_GRID},
+        "predicted": {k: [] for k in PARAMS_GRID},
+    }
+    with csv_path.open("r", newline="", encoding="utf-8", errors="replace") as fh:
+        for row in csv_mod.DictReader(fh):
+            try:
+                tp = _niggli_params(_unescape(row["target"]))
+                pp = _niggli_params(_unescape(row["prediction"]))
+                out["target"]["a"].append(tp[0])
+                out["target"]["c"].append(tp[2])
+                out["target"]["gamma"].append(tp[5])
+                out["predicted"]["a"].append(pp[0])
+                out["predicted"]["c"].append(pp[2])
+                out["predicted"]["gamma"].append(pp[5])
+            except Exception:
+                continue
+    return out
+
+
+def plot_reconstruction_grids(root: Path, outdir: Path) -> None:
+    """Generate a reconstruction grid (N×3) for each dataset tag (alex, jarvis)."""
+    datasets = [
+        ("alex",   "Alexandria DS-A/B Reconstruction KLD",
+         np.arange(2.0, 10.0 + 1e-9, 0.10), np.arange(30.0, 140.0 + 1e-9, 8.0),
+         "alexandria_reconstruction_grid"),
+        ("jarvis", "JARVIS Supercon-3D Reconstruction KLD",
+         np.arange(2.0, 10.0 + 1e-9, 0.25), np.arange(30.0, 140.0 + 1e-9, 10.0),
+         "jarvis_reconstruction_grid"),
+    ]
+    for tag, title, bins_a_c, bins_gamma, slug in datasets:
+        active: List[str] = []
+        series_map: Dict[str, dict] = {}
+        kld_map:    Dict[str, dict] = {}
+
+        for model in _GRID_MODELS:
+            bench_dir = next(
+                (d for d in root.iterdir()
+                 if d.is_dir() and tag in d.name.lower() and model in d.name.lower()),
+                None,
+            )
+            if bench_dir is None:
+                continue
+            csv_path = _find_grid_csv(bench_dir)
+            if csv_path is None:
+                continue
+            series = _extract_grid_series(csv_path)
+            if not any(series["target"][p] for p in PARAMS_GRID):
+                continue
+            active.append(model)
+            series_map[model] = series
+            mfp = bench_dir / "metrics.json"
+            try:
+                data = json.loads(mfp.read_text()) if mfp.exists() else {}
+                k = data.get("KLD", {})
+                kld_map[model] = {p: float(k[p]) for p in PARAMS_GRID if p in k}
+            except Exception:
+                kld_map[model] = {}
+
+        if not active:
+            print(f"ℹ  No data for tag={tag!r} — skipping reconstruction grid",
+                  file=sys.stderr)
+            continue
+
+        n_rows = len(active)
+        fig, axes = plt.subplots(n_rows, 3, figsize=(9, 2.8 * n_rows))
+        if n_rows == 1:
+            axes = axes[np.newaxis, :]
+        for ax in axes.ravel():
+            ax.set_ylabel("")
+            ax.tick_params(axis="y", which="both",
+                           left=False, right=False, labelleft=False, labelright=False)
+        fig.subplots_adjust(left=0.08, right=0.88, bottom=0.12, top=0.86,
+                            wspace=0.10, hspace=0.30)
+
+        def _wpct(n: int) -> np.ndarray:
+            return np.ones(n, dtype=float) * (100.0 / n) if n > 0 else np.array([])
+
+        panel_idx = 0
+        for r, model in enumerate(active):
+            series = series_map[model]
+            klds   = kld_map[model]
+            for c, param in enumerate(PARAMS_GRID):
+                ax = axes[r, c]
+                ax.text(0.03, 0.92, PANEL_LETTERS[panel_idx],
+                        transform=ax.transAxes, ha="left", va="top", fontsize=9)
+                panel_idx += 1
+                if c == 0:
+                    ax.set_ylabel(_GRID_MODEL_LABEL[model], fontsize=22)
+                xt = np.asarray(series["target"][param],    dtype=float)
+                xp = np.asarray(series["predicted"][param], dtype=float)
+                bins = bins_a_c if param in ("a", "c") else bins_gamma
+                ax.hist(xt, bins=bins, weights=_wpct(len(xt)),
+                        histtype="stepfilled", alpha=0.68, color=WVU_BLUE,
+                        edgecolor="none", label="target")
+                ax.hist(xp, bins=bins, weights=_wpct(len(xp)),
+                        histtype="stepfilled", alpha=0.68, color=WVU_GOLD,
+                        edgecolor="none", label="predicted")
+                if r == n_rows - 1:
+                    ax.set_xlabel(PARAM_LABEL[param], fontsize=14)
+                ax.tick_params(axis="both", which="major", labelsize=12, width=1.4, length=7)
+                ax.tick_params(axis="y", which="both", left=False)
+                ax.minorticks_off()
+                if c != 0:
+                    ax.set_yticklabels([])
+                kld_val = klds.get(param)
+                if kld_val is not None and np.isfinite(kld_val):
+                    ax.text(0.97, 0.92, f"KLD = {kld_val:.3f}",
+                            transform=ax.transAxes, ha="right", va="top", fontsize=9,
+                            bbox=dict(boxstyle="round,pad=0.35", fc="white", ec="black",
+                                      lw=0.8, alpha=0.95))
+
+        handles, labels_leg = axes[0, 0].get_legend_handles_labels()
+        if handles:
+            leg = axes[0, 0].legend(handles, labels_leg,
+                                    loc="center right", frameon=True, fontsize=12)
+            leg.get_frame().set_alpha(0.95)
+            leg.get_frame().set_facecolor("white")
+            leg.get_frame().set_edgecolor("black")
+            leg.get_frame().set_linewidth(0.6)
+
+        fig.suptitle(title, fontsize=28, y=0.93)
+        fig.text(0.91, 0.5, "Materials Percentage (%)",
+                 rotation=270, va="center", ha="center", fontsize=20)
+        out_png = outdir / f"{slug}.png"
+        fig.savefig(out_png, dpi=200, bbox_inches="tight")
+        plt.close(fig)
+        print(f"✓ {out_png.name}")
+
+
 # ── CLI ────────────────────────────────────────────────────────────────────────
-ALL_CHART_TYPES = ("kld", "mae", "rmse", "ccrmse", "match-rate",
+ALL_CHART_TYPES = ("kld", "mae", "rmse", "ccrmsd", "match-rate",
                    "grid", "crystal-system-mae", "distribution")
 
 
@@ -788,10 +964,10 @@ def main(argv=None) -> None:
         print("\n── RMSE bar chart")
         plot_rmse_bar_chart(df_metrics, outdir, display_names)
 
-    # ── ccRMSE bar chart ──────────────────────────────────────────────────────
-    if not df_metrics.empty and "ccrmse" in only:
-        print("\n── ccRMSE bar chart")
-        plot_ccrmse_bar_chart(df_metrics, outdir, display_names)
+    # ── ccRMSD bar chart ──────────────────────────────────────────────────────
+    if not df_metrics.empty and "ccrmsd" in only:
+        print("\n── ccRMSD bar chart")
+        plot_ccrmsd_bar_chart(df_metrics, outdir, display_names)
 
     # ── Match-rate bar chart ──────────────────────────────────────────────────
     if not df_metrics.empty and "match-rate" in only:

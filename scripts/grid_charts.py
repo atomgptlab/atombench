@@ -38,7 +38,7 @@ WVU_GOLD = "#EEAA00"  # predicted
 
 MODELS = ["cdvae", "agpt_stoich", "mattergen_stoich", "mattergen_tc_finetune", "agpt", "mattergen", "flowmm"]
 MODEL_LABEL = {
-    "agpt_stoich":           "AtomGPT",
+    "agpt_stoich":           "AtomGPT\nTc",
     "agpt":                  "AtomGPT",
     "cdvae":                 "CDVAE",
     "flowmm":                "FlowMM",

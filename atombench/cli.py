@@ -30,14 +30,14 @@ import amd
 from atombench._common import discover_benchmark_csvs
 
 from atombench.plots import (
-    plot_distribution,
     plot_kld_bar_chart,
     plot_mae_abc_bar_chart,
     plot_mae_angles_bar_chart,
     plot_rmse_bar_chart,
-    plot_ccrmse_bar_chart,
+    plot_ccrmsd_bar_chart,
     plot_match_rate_bar_chart,
     plot_crystal_system_mae_from_json,
+    plot_reconstruction_grids,
 )
 
 from atombench.tables import extract_metrics, build_metrics_tex
@@ -217,8 +217,8 @@ def compute_metrics(df: pd.DataFrame, bench_name: str, *,
     click.echo("    StructureMatcher RMSE …")
     rmse = _compute_atomgen_rmse(df)
 
-    click.echo(f"    ccRMSE/AMD (k={amd_k}) …")
-    ccrmse_val, n_ccrmse = _compute_ccrmse(df, amd_k)
+    click.echo(f"    ccRMSD/AMD (k={amd_k}) …")
+    ccrmsd_val, n_ccrmsd = _compute_ccrmse(df, amd_k)
 
     click.echo(f"    crystal-system MAE (symprec={symprec}, kmin={kmin}) …")
     crysys = _compute_crystal_system_mae(df, symprec, kmin)
@@ -228,7 +228,7 @@ def compute_metrics(df: pd.DataFrame, bench_name: str, *,
         "KLD": {k: kld_vals[k] for k in PARAMS_ALL},
         "MAE": {"average_mae": {k: mae_vals[k] for k in PARAMS_ALL}},
         "RMSE": {"AtomGen": rmse},
-        "ccRMSE": {"value": ccrmse_val, "amd_k": amd_k, "n_eval": n_ccrmse},
+        "ccRMSD": {"value": ccrmsd_val, "amd_k": amd_k, "n_eval": n_ccrmsd},
         "crystal_system_mae": crysys,
     }
 
@@ -299,12 +299,6 @@ def main(
     # ── Plots ──────────────────────────────────────────────────────────────────
     click.echo("\n── Plots")
 
-    for bench_name, csv_path, _ in all_results:
-        try:
-            plot_distribution(bench_name, csv_path, figures_dir)
-        except Exception as e:
-            click.echo(f"  ⚠ {bench_name}: distribution plot failed — {e}", err=True)
-
     all_metrics = [m for _, _, m in all_results]
     rows = [pd.json_normalize(m, sep=".", max_level=3).iloc[0].to_dict() for m in all_metrics]
     df_metrics = pd.DataFrame(rows)
@@ -313,7 +307,7 @@ def main(
     plot_mae_abc_bar_chart(df_metrics, figures_dir)
     plot_mae_angles_bar_chart(df_metrics, figures_dir)
     plot_rmse_bar_chart(df_metrics, figures_dir)
-    plot_ccrmse_bar_chart(df_metrics, figures_dir)
+    plot_ccrmsd_bar_chart(df_metrics, figures_dir)
     plot_match_rate_bar_chart(df_metrics, figures_dir)
 
     if any("crystal_system_mae" in m for m in all_metrics):
@@ -321,6 +315,13 @@ def main(
             plot_crystal_system_mae_from_json(all_metrics, figures_dir, kmin=kmin)
         except Exception as e:
             click.echo(f"  ⚠ crystal-system MAE charts failed — {e}", err=True)
+
+    bench_roots = {csv_path.parent.parent for _, csv_path, _ in all_results}
+    grid_root = bench_roots.pop() if len(bench_roots) == 1 else all_results[0][1].parent.parent
+    try:
+        plot_reconstruction_grids(grid_root, figures_dir)
+    except Exception as e:
+        click.echo(f"  ⚠ reconstruction grids failed — {e}", err=True)
 
     # ── Tables ─────────────────────────────────────────────────────────────────
     click.echo("\n── Tables")

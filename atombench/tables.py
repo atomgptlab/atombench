@@ -47,7 +47,7 @@ MODEL_ORDER = [
 
 MODEL_LABELS: dict[str, str] = {
     "agpt_benchmark":                  "AtomGPT",
-    "agpt_stoich_benchmark":           "AtomGPT (stoich.)",
+    "agpt_stoich_benchmark":           "AtomGPT Tc",
     "cdvae_benchmark":                 "CDVAE",
     "flowmm_benchmark":                "FlowMM",
     "mattergen_stoich_benchmark":      "MatterGen (stoich.)",
@@ -107,7 +107,7 @@ def extract_metrics(raw: dict) -> dict:
     mae["mean_angles"] = sum(angle_vals) / len(angle_vals) if angle_vals else None
 
     rmse_raw   = raw.get("RMSE", {}).get("AtomGen", {})
-    cc_raw     = raw.get("ccRMSE", {})
+    cc_raw     = raw.get("ccRMSD", raw.get("ccRMSE", {}))
     ccrmsd     = cc_raw.get("value")
     if ccrmsd is not None and math.isnan(ccrmsd):
         ccrmsd = None
