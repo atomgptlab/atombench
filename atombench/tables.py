@@ -117,10 +117,12 @@ def extract_metrics(raw: dict) -> dict:
         "MAE":            mae,
         "RMSD":           rmse_raw.get("mean_cartesian_rms_angstrom"),
         "match_rate":     rmse_raw.get("match_rate"),
+        "stol":           rmse_raw.get("stol"),
         "n_matched":      rmse_raw.get("n_matched"),
         "n_total":        rmse_raw.get("n_total"),
         "ccRMSD":         ccrmsd,
         "ccRMSD_n_eval":  cc_raw.get("n_eval", 0),
+        "crystal_system_mae": raw.get("crystal_system_mae"),
     }
 
 
@@ -270,13 +272,13 @@ def build_metrics_tex(results: dict[str, dict]) -> str:
         lines.append(r"\hline")
     lines += [r"\end{tabular}", r"", r"\vspace{2em}", r""]
 
-    # ── Stack 3: RMSD + match rate ────────────────────────────────────────────
+    # ── Stack 3: RMSD + match rate + stol ────────────────────────────────────
     lines += [
         r"% ── Coordinate RMSD + Match Rate ────────────────────────────────",
-        r"\begin{tabular}{llcc}",
-        r"\multicolumn{4}{c}{\textbf{Coordinate Reconstruction}} \\",
+        r"\begin{tabular}{llccc}",
+        r"\multicolumn{5}{c}{\textbf{Coordinate Reconstruction}} \\",
         r"\hline",
-        r"Dataset & Model & RMSD (\AA) & Match rate \\",
+        r"Dataset & Model & RMSD (\AA) & Match rate & STOL \\",
         r"\hline",
     ]
     for ds_key in DATASET_ORDER:
@@ -289,8 +291,9 @@ def build_metrics_tex(results: dict[str, dict]) -> str:
         for i, (exp, e) in enumerate(rows):
             rmsd = _fmt(e.get("RMSD"),       4, best_rmsd)
             mr   = _fmt(e.get("match_rate"), 4, best_mr)
+            stol = _fmt(e.get("stol"),       2)
             pfx  = ds_label if i == 0 else ""
-            lines.append(rf" {pfx} & {_model_label(exp)} & {rmsd} & {mr} \\")
+            lines.append(rf" {pfx} & {_model_label(exp)} & {rmsd} & {mr} & {stol} \\")
         lines.append(r"\hline")
     lines += [r"\end{tabular}", r"", r"\vspace{2em}", r""]
 
@@ -319,7 +322,7 @@ def build_metrics_tex(results: dict[str, dict]) -> str:
     lines += [
         r"\caption{Reconstruction metrics for all benchmark instances."
         r" Stacked blocks: lattice KLD, lattice MAE (lengths in \AA, angles in degrees),"
-        r" coordinate RMSD and match rate, and ccRMSD (AMD-based RMSE, $k{=}100$)."
+        r" coordinate RMSD, match rate, and STOL threshold, and ccRMSD (AMD-based RMSE, $k{=}100$)."
         r" Bold marks the best value per column per dataset block."
         r" Match rate is bolded at its maximum; all other metrics at their minimum.}",
         r"\label{tab:reconstruction_all}",
@@ -378,15 +381,16 @@ def main(path: Path, outdir: Optional[Path]) -> None:
     click.echo(f"Wrote {out_tex}")
     click.echo(f"Wrote {out_csv}")
 
-    click.echo("\nSummary (match_rate | RMSD | ccRMSD | KLD_mean):")
+    click.echo("\nSummary (match_rate | stol | RMSD | ccRMSD | KLD_mean):")
     for exp in sorted(results, key=_sort_key):
         e    = results[exp]
         mr   = e.get("match_rate");  mr_s   = f"{mr:.4f}"   if mr   is not None else "---"
+        stol = e.get("stol");        stol_s = f"{stol:.2f}" if stol is not None else "---"
         rmsd = e.get("RMSD");        rmsd_s = f"{rmsd:.4f}" if rmsd is not None else "---"
         cc   = e.get("ccRMSD");      cc_s   = f"{cc:.4f}"   if cc   is not None else "---"
         km   = e.get("KLD", {}).get("mean")
         km_s = f"{km:.4f}" if km is not None else "---"
-        click.echo(f"  {exp}: MR={mr_s}  RMSD={rmsd_s}  cc={cc_s}  KLD={km_s}")
+        click.echo(f"  {exp}: MR={mr_s}  STOL={stol_s}  RMSD={rmsd_s}  cc={cc_s}  KLD={km_s}")
 
 
 if __name__ == "__main__":

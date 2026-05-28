@@ -27,22 +27,22 @@ from atombench._common import discover_benchmark_csvs
 
 
 # ── Structure helpers ─────────────────────────────────────────────────────────
-def _parse_structure(poscar_text: str) -> Optional[Structure]:
+def _parse_structure(cell_str: str) -> Optional[Structure]:
     try:
-        text = poscar_text.replace("\\n", "\n").replace("\\t", " ").strip()
+        text = cell_str.replace("\\n", "\n").replace("\\t", " ").strip()
         return Structure.from_str(text, fmt="poscar")
     except Exception:
         return None
 
 
-def _structure_signature(poscar_text: Optional[str], decimals: int = 1) -> tuple:
+def _structure_signature(cell_str: Optional[str], decimals: int = 1) -> tuple:
     """
     Order-insensitive structural signature rounded to *decimals* decimal places.
     Returns a hashable tuple; special sentinel strings on failure.
     """
-    if not poscar_text or not str(poscar_text).strip():
+    if not cell_str or not str(cell_str).strip():
         return ("__EMPTY__",)
-    s = _parse_structure(str(poscar_text))
+    s = _parse_structure(str(cell_str))
     if s is None:
         return ("__PARSE_FAILED__",)
 
