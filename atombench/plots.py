@@ -25,7 +25,6 @@ mpl.use("Agg")
 mpl.rcParams.update({
     "font.family": "serif",
     "axes.linewidth": 0.8,
-    "patch.linewidth": 0.0,
     "font.serif": ["Times New Roman", "Times", "Nimbus Roman No9 L", "DejaVu Serif", "STIX"],
 })
 
@@ -352,7 +351,7 @@ def plot_kld_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
     kld_df = (df.set_index("benchmark_name")[kld_cols]
                 .rename(columns=lambda c: AX_LABEL_MAP[c.split(".")[-1]]))
     fig, ax = plt.subplots(figsize=(10, 8))
-    kld_df.plot(kind="bar", edgecolor="k", ax=ax)
+    kld_df.plot(kind="bar", edgecolor="k", linewidth=0.8, ax=ax)
     _style_bar_axes(ax, "KL Divergence (Nats)",
                     "KL Divergence of Predicted vs. Target\nLattice-Parameter Distributions")
     plt.savefig(outdir / "comparison_bar_chart.png", dpi=300)
@@ -373,7 +372,7 @@ def plot_mae_abc_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
                 .rename(columns=lambda c: AX_LABEL_MAP[c.split(".")[-1]]))
     length_cols = [AX_LABEL_MAP[k] for k in ("a", "b", "c")]
     fig, ax = plt.subplots(figsize=(10, 8))
-    mae_df[length_cols].plot(kind="bar", edgecolor="k", ax=ax)
+    mae_df[length_cols].plot(kind="bar", edgecolor="k", linewidth=0.8, ax=ax)
     _style_bar_axes(ax, "Mean Absolute Error (Å)", "Mean Absolute Error – Lattice Lengths (Å)")
     plt.savefig(outdir / "mae_bar_chart_abc.png", dpi=300)
     plt.close(fig)
@@ -392,7 +391,7 @@ def plot_mae_angles_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
                 .rename(columns=lambda c: AX_LABEL_MAP[c.split(".")[-1]]))
     angle_cols = [AX_LABEL_MAP[k] for k in ("alpha", "beta", "gamma")]
     fig, ax = plt.subplots(figsize=(10, 8))
-    mae_df[angle_cols].plot(kind="bar", edgecolor="k",
+    mae_df[angle_cols].plot(kind="bar", edgecolor="k", linewidth=0.8,
                             color=["red", "purple", "brown"], ax=ax)
     _style_bar_axes(ax, "Mean Absolute Error (°)", "Mean Absolute Error – Lattice Angles (°)")
     plt.savefig(outdir / "mae_bar_chart_angles.png", dpi=300)
@@ -534,7 +533,7 @@ def plot_crystal_system_mae_from_json(
 
     len_tops = g[["a", "b", "c"]].max(axis=1).to_numpy(dtype=float)
     fig, ax  = plt.subplots(figsize=(10, 8))
-    plot_df[length_cols].plot(kind="bar", edgecolor="k", ax=ax, color=LEN_GRANITE)
+    plot_df[length_cols].plot(kind="bar", edgecolor="k", linewidth=0.8, ax=ax, color=LEN_GRANITE)
     _style_crysys(ax, "Mean Absolute Error (Å)",
                   "Mean Absolute Error by Crystal System\n"
                   "Results Pooled from All Benchmarks\nLattice Lengths (Å)")
@@ -546,7 +545,7 @@ def plot_crystal_system_mae_from_json(
 
     ang_tops = g[["alpha", "beta", "gamma"]].max(axis=1).to_numpy(dtype=float)
     fig, ax  = plt.subplots(figsize=(10, 8))
-    plot_df[angle_cols].plot(kind="bar", edgecolor="k", ax=ax, color=ANG_GRANITE)
+    plot_df[angle_cols].plot(kind="bar", edgecolor="k", linewidth=0.8, ax=ax, color=ANG_GRANITE)
     _style_crysys(ax, "Mean Absolute Error (°)",
                   "Mean Absolute Error by Crystal System\n"
                   "Results Pooled from All Benchmarks\nLattice Angles (°)")
