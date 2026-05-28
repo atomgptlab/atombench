@@ -29,6 +29,7 @@ mpl.rcParams.update({
 })
 
 from atombench._common import discover_benchmark_csvs
+from atombench._structure_io import parse_structure
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -123,15 +124,15 @@ CCRMSD_MODEL_COLORS: Dict[str, str] = {k: _darken(v) for k, v in MODEL_COLORS.it
 
 # ── Pymatgen / Niggli helpers ──────────────────────────────────────────────────
 @lru_cache(maxsize=20000)
-def _reduced_struct(poscar_text: str) -> Structure:
-    s = Structure.from_str(poscar_text.replace("\\n", "\n"), fmt="poscar")
+def _reduced_struct(cell_str: str) -> Structure:
+    s = parse_structure(cell_str)
     s = s.get_primitive_structure()
     return s.get_reduced_structure(reduction_algo="niggli")
 
 
 @lru_cache(maxsize=20000)
-def _niggli_params(poscar_text: str) -> Tuple[float, ...]:
-    s = _reduced_struct(poscar_text)
+def _niggli_params(cell_str: str) -> Tuple[float, ...]:
+    s = _reduced_struct(cell_str)
     return (*s.lattice.abc, *s.lattice.angles)
 
 
@@ -589,9 +590,6 @@ def plot_group_grid(group_cfg: dict, root: Path, outdir: Path) -> None:
     def _weights_pct(n: int) -> np.ndarray:
         return np.ones(n, dtype=float) * (100.0 / n) if n > 0 else np.array([])
 
-    def _unescape(s: str) -> str:
-        return s.replace("\r\n", "\n").replace("\r", "\n").replace("\\n", "\n").strip()
-
     def _extract(csv_path: Path) -> Dict[str, Dict[str, List[float]]]:
         out: Dict[str, Dict[str, List[float]]] = {
             "target": {k: [] for k in PARAMS_GRID},
@@ -601,8 +599,8 @@ def plot_group_grid(group_cfg: dict, root: Path, outdir: Path) -> None:
             reader = csv_mod.DictReader(fh)
             for row in reader:
                 try:
-                    tp = _niggli_params(_unescape(row["target"]))
-                    pp = _niggli_params(_unescape(row["prediction"]))
+                    tp = _niggli_params(row["target"])
+                    pp = _niggli_params(row["prediction"])
                     out["target"]["a"].append(tp[0])
                     out["target"]["c"].append(tp[2])
                     out["target"]["gamma"].append(tp[5])
@@ -721,10 +719,6 @@ _GRID_MODEL_LABEL = {
 }
 
 
-def _unescape(s: str) -> str:
-    return s.replace("\r\n", "\n").replace("\r", "\n").replace("\\n", "\n").strip()
-
-
 def _find_grid_csv(bench_dir: Path) -> Optional[Path]:
     for p in bench_dir.iterdir():
         if p.suffix.lower() != ".csv":
@@ -747,8 +741,8 @@ def _extract_grid_series(csv_path: Path) -> Dict[str, Dict[str, List[float]]]:
     with csv_path.open("r", newline="", encoding="utf-8", errors="replace") as fh:
         for row in csv_mod.DictReader(fh):
             try:
-                tp = _niggli_params(_unescape(row["target"]))
-                pp = _niggli_params(_unescape(row["prediction"]))
+                tp = _niggli_params(row["target"])
+                pp = _niggli_params(row["prediction"])
                 out["target"]["a"].append(tp[0])
                 out["target"]["c"].append(tp[2])
                 out["target"]["gamma"].append(tp[5])

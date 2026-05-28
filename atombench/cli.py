@@ -28,6 +28,7 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 import amd
 
 from atombench._common import discover_benchmark_csvs
+from atombench._structure_io import parse_structure
 
 from atombench.plots import (
     plot_kld_bar_chart,
