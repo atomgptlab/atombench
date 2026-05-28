@@ -44,9 +44,9 @@ See `atombench --help` (and `atombench-plots --help`, etc.) for the full option 
 
 ---
 
-## Cite Us!
+## Citation
 
-If you use AtomBench in your research, please cite:
+If you use AtomBench in your research, please consider citing us:
 
 ```bibtex
 @article{campbell2025atombench,
@@ -54,7 +54,7 @@ If you use AtomBench in your research, please cite:
   author  = {Campbell, Charles Rhys and Romero, Aldo H. and Choudhary, Kamal},
   journal = {Preprint},
   year    = {2025},
-  url     = {https://github.com/atomgptlab/atombench_inverse},
+  url     = {https://github.com/atomgptlab/atombench},
 }
 ```
 
