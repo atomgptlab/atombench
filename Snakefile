@@ -30,7 +30,11 @@ rule all:
         "ccrmse_chart.made",
         "crystal_system_mae_charts.created",
         "match_rate_chart.made",
-        "all_figures.collected"
+        "all_figures.collected",
+        "job_runs/computational_costs.json",
+        "job_runs/computational_costs.tex",
+        "job_runs/metrics_table.json",
+        "job_runs/metrics_table.tex"
 
 rule make_atomgpt_env:
     output:
@@ -240,3 +244,20 @@ rule collect_all_figures:
         cp tc_supercon/jarvis_tc_histogram.png          all_figures/dataset/
         """
 
+rule harvest_compute_times:
+    input:
+        expand("{exp}.final", exp=EXPS)
+    output:
+        "job_runs/computational_costs.json",
+        "job_runs/computational_costs.tex"
+    shell:
+        "python scripts/harvest_compute_times.py"
+
+rule harvest_metrics:
+    input:
+        "metrics.computed"
+    output:
+        "job_runs/metrics_table.json",
+        "job_runs/metrics_table.tex"
+    shell:
+        "atombench-tables job_runs/ --outdir job_runs/"

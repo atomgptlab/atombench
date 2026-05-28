@@ -29,6 +29,8 @@ mpl.rcParams.update({
     "font.serif": ["Times New Roman", "Times", "Nimbus Roman No9 L", "DejaVu Serif", "STIX"],
 })
 
+from atombench._common import discover_benchmark_csvs
+
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
@@ -134,48 +136,30 @@ def _niggli_params(poscar_text: str) -> Tuple[float, ...]:
 
 
 # ── Discovery helpers ──────────────────────────────────────────────────────────
-def find_benchmark_csv(dir_path: Path) -> Optional[Path]:
-    """Return the newest CSV under dir_path that has id/target/prediction columns."""
-    latest: Optional[Tuple[float, Path]] = None
-    for p, _, files in os.walk(dir_path):
-        for f in files:
-            if not f.lower().endswith(".csv"):
-                continue
-            path = Path(p) / f
-            try:
-                with path.open("r", newline="", encoding="utf-8", errors="replace") as fh:
-                    reader = csv_mod.DictReader(fh)
-                    fields = {fn.strip().lower() for fn in (reader.fieldnames or [])}
-                    if {"id", "target", "prediction"}.issubset(fields):
-                        mt = path.stat().st_mtime
-                        if latest is None or mt > latest[0]:
-                            latest = (mt, path)
-            except Exception:
-                continue
-    return latest[1] if latest else None
-
-
 def discover_benchmarks(
     root: Path,
 ) -> List[Tuple[str, Path, Optional[Path], Optional[dict]]]:
     """
-    Return (bench_name, bench_dir, csv_path_or_None, metrics_dict_or_None)
-    for each subdirectory of root.
+    Return (bench_name, bench_dir, csv_path, metrics_dict_or_None) for each
+    benchmark found under *root*.
+
+    Input validation is delegated to discover_benchmark_csvs (assert-based):
+    *root* must be a benchmark CSV file or a directory of benchmark CSV files.
+    metrics.json is loaded from the same directory as each CSV.
     """
+    pairs = discover_benchmark_csvs(root)
     results = []
-    for entry in sorted(root.iterdir()):
-        if not entry.is_dir():
-            continue
-        csv_path = find_benchmark_csv(entry)
+    for name, csv_path in pairs:
+        bench_dir = csv_path.parent
         metrics: Optional[dict] = None
-        mfp = entry / "metrics.json"
+        mfp = bench_dir / "metrics.json"
         if mfp.is_file():
             try:
                 with mfp.open() as fh:
                     metrics = json.load(fh)
             except Exception as e:
-                print(f"⚠  {entry.name}: could not load metrics.json — {e}", file=sys.stderr)
-        results.append((entry.name, entry, csv_path, metrics))
+                print(f"⚠  {name}: could not load metrics.json — {e}", file=sys.stderr)
+        results.append((name, bench_dir, csv_path, metrics))
     return results
 
 
@@ -744,8 +728,7 @@ def main(argv=None) -> None:
     root   = args.root.resolve()
     outdir = args.outdir.resolve()
 
-    if not root.is_dir():
-        sys.exit(f"ERROR: --root does not exist: {root}")
+    assert root.exists(), f"--root does not exist: {root}"
     outdir.mkdir(parents=True, exist_ok=True)
 
     only = set(args.only) if args.only else set(ALL_CHART_TYPES)
@@ -763,9 +746,7 @@ def main(argv=None) -> None:
         groups = cfg.get("groups", [])
 
     # ── Discover benchmarks ───────────────────────────────────────────────────
-    benchmarks = discover_benchmarks(root)
-    if not benchmarks:
-        sys.exit(f"ERROR: no benchmark subdirectories found in {root}")
+    benchmarks = discover_benchmarks(root)  # asserts fire inside if no CSVs found
 
     metrics_dicts: List[dict] = []
     bench_data: List[Tuple[str, Path, Optional[Path], Optional[dict]]] = []

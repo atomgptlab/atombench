@@ -8,7 +8,6 @@ Usage:
 """
 from __future__ import annotations
 
-import csv as csv_mod
 import json
 import os
 from collections import defaultdict
@@ -27,6 +26,8 @@ from pymatgen.core import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 import amd
+
+from atombench._common import discover_benchmark_csvs
 
 # Plotting functions live in atombench.plots; importing here sets the Agg backend.
 from atombench.plots import (
@@ -231,55 +232,7 @@ def compute_metrics(df: pd.DataFrame, bench_name: str, *,
     }
 
 
-# ── Discovery helpers ──────────────────────────────────────────────────────────
-def _is_benchmark_csv(path: Path) -> bool:
-    try:
-        with path.open("r", newline="", encoding="utf-8", errors="replace") as fh:
-            reader = csv_mod.DictReader(fh)
-            fields = {f.strip().lower() for f in (reader.fieldnames or [])}
-            return {"id", "target", "prediction"}.issubset(fields)
-    except Exception:
-        return False
-
-
-def _find_csv_in_dir(d: Path) -> Optional[Path]:
-    """Return the newest benchmark CSV found anywhere under directory d."""
-    latest: Optional[Tuple[float, Path]] = None
-    for root, _, files in os.walk(d):
-        for f in files:
-            if not f.lower().endswith(".csv"):
-                continue
-            path = Path(root) / f
-            if _is_benchmark_csv(path):
-                mt = path.stat().st_mtime
-                if latest is None or mt > latest[0]:
-                    latest = (mt, path)
-    return latest[1] if latest else None
-
-
-def discover_benchmarks(path: Path) -> List[Tuple[str, Path]]:
-    """
-    Return (bench_name, csv_path) pairs from a file or directory.
-
-    - Single CSV file  → one benchmark.
-    - Flat directory   → one benchmark per .csv file found directly inside.
-    - Structured dir   → one benchmark per subdirectory that contains a CSV.
-    """
-    if path.is_file():
-        return [(path.stem, path)]
-
-    direct_csvs = [p for p in sorted(path.glob("*.csv")) if _is_benchmark_csv(p)]
-    if direct_csvs:
-        return [(p.stem, p) for p in direct_csvs]
-
-    subdir_benchmarks = []
-    for entry in sorted(path.iterdir()):
-        if not entry.is_dir():
-            continue
-        csv = _find_csv_in_dir(entry)
-        if csv:
-            subdir_benchmarks.append((entry.name, csv))
-    return subdir_benchmarks
+# Discovery is handled by atombench._common.discover_benchmark_csvs
 
 
 # ── CLI ────────────────────────────────────────────────────────────────────────
@@ -323,9 +276,7 @@ def main(
     outdir = outdir.resolve()
     outdir.mkdir(parents=True, exist_ok=True)
 
-    benchmarks = discover_benchmarks(path.resolve())
-    if not benchmarks:
-        raise click.ClickException(f"No benchmark CSV files found at: {path}")
+    benchmarks = discover_benchmark_csvs(path.resolve())
 
     if name is not None and len(benchmarks) == 1:
         benchmarks = [(name, benchmarks[0][1])]
