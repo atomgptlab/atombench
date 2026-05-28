@@ -2,8 +2,71 @@
 
 The rapid development of generative AI models for materials discovery has created a need for standardized benchmarks to evaluate their performance. In this work, we present $\textbf{AtomBench}$, a systematic benchmarking framework that comparatively evaluates three representative generative architectures-AtomGPT (transformer-based), CDVAE (diffusion variational autoencoder), and FlowMM (Riemannian flow matching)-for inverse crystal structure design. We train and evaluate these models on two high-quality DFT superconductivity datasets: JARVIS Supercon-3D and Alexandria DS-A/B, comprising over 9,000 structures with computed electron-phonon coupling properties.
 
-## Installation Instructions
+---
+
+## `atombench` Python Package
+
+The `atombench` package provides command-line tools for computing metrics and generating publication-quality figures from benchmark CSV files (columns: `id`, `target`, `prediction`). It is independent of the Snakemake pipeline and can be used on any benchmark CSVs you already have.
+
+### Installation
+
+```bash
+pip install atombench
+```
+
+### CLI Tools
+
+| Command | Description |
+|---|---|
+| `atombench <path>` | Compute all metrics and generate plots for one CSV or a directory of CSVs |
+| `atombench-plots --root <job_runs/> --outdir <figures/>` | Generate all comparison charts from pre-computed metrics |
+| `atombench-tables --root <job_runs/> --outdir <out/>` | Build summary metric tables (JSON + LaTeX) |
+| `atombench-times <path>` | Harvest GPU wall-clock times and epoch counts from SLURM logs |
+| `atombench-verify <path>` | Cross-benchmark consistency checks (shared test-set IDs) |
+
+### Quick Example
+
+```bash
+# Compute metrics and plots for a single benchmark CSV
+atombench path/to/benchmark.csv
+
+# Process a directory of benchmark CSVs, writing outputs to my_figures/
+atombench path/to/job_runs/ --outdir my_figures/
+
+# Skip re-computing metrics if metrics.json already exists
+atombench path/to/job_runs/ --skip-metrics
+
+# Metrics only, no plots
+atombench path/to/benchmark.csv --metrics-only
+```
+
+See `atombench --help` (and `atombench-plots --help`, etc.) for the full option reference.
+
 ### [Tutorial in Google Colab](https://github.com/crhysc/jarvis-tools-notebooks/blob/master/atombench_example.ipynb)
+
+---
+
+## Cite Us!
+
+If you use AtomBench in your research, please cite:
+
+```bibtex
+@article{campbell2025atombench,
+  title   = {AtomBench: A Benchmarking Framework for Generative Crystal Reconstruction Models in Conventional Superconductors},
+  author  = {Campbell, Charles Rhys and Romero, Aldo H. and Choudhary, Kamal},
+  journal = {Preprint},
+  year    = {2025},
+  url     = {https://github.com/atomgptlab/atombench_inverse},
+}
+```
+
+---
+
+## Recompute AtomBench Benchmarks
+
+The sections below describe how to re-run the full Snakemake pipeline on an HPC cluster to reproduce the benchmark results from scratch.
+
+### Installation Instructions
 
 #### Step 1: Confirm operating system, workload manager, and Python package manager
 This repo is built for Linux-based High-Performance Computing (HPC) clusters that use the SLURM workload manager and provide a CUDA 11.8 module. It will not run on MacOS devices, Windows devices, and non-SLURM HPC clusters. A valid `conda` installation is also required, and it must have the capacity to be initialized using the `conda` shell integration hook via the following command:
@@ -31,7 +94,7 @@ To recompute the benchmarks, the generative models need to be downloaded into th
 git submodule update --init --recursive
 ```
 
-#### Step 4: Create and activate a `conda` environment to host Atombench Python dependencies
+#### Step 4: Create and activate a `conda` environment
 Normally, it is best-practice to avoid installing Python packages to one's base `conda` environment. Make an environment to store required Python deps (note that `pip` is intentionally included here since it is used in downstream steps):
 ```bash
 conda create --name atombench python=3.11 pip -y
@@ -48,12 +111,12 @@ NOTE: It may take 20 minutes to and hour to setup the FlowMM `conda` environment
 #### Step 6: Download Python dependencies
 This repository recomputes the AtomBench benchmarks using a semi-automated `Snakemake` pipeline. For more information about `Snakemake`, visit their [documentation](https://snakemake.readthedocs.io/en/stable/) site. Moreover, we use `uv` to speed up downstream package installation, and we use `DVC` to automate dataset preprocessing.
 ```bash
-pip install uv; uv pip install snakemake dvc average-minimum-distance jarvis-tools==2026.1.10 pymatgen ase tqdm numpy pandas
+pip install uv; uv pip install snakemake dvc average-minimum-distance jarvis-tools==2026.1.10 pymatgen ase tqdm numpy pandas atombench
 ```
 
-## Common Installation Pitfalls
+### Common Installation Pitfalls
 
-- **`conda` doesn’t activate properly**  
+- **`conda` doesn't activate properly**  
   If `conda activate` does nothing or errors, your shell is not initialized. Run  
   `eval "$(conda shell.bash hook)"` and confirm that `(base)` appears in your prompt.
 
@@ -72,9 +135,8 @@ pip install uv; uv pip install snakemake dvc average-minimum-distance jarvis-too
 
 If you hit an issue not listed here, run `depcheck.sh` first—it catches most environment-level problems before you waste time debugging downstream failures.
 
+### Running the Pipeline
 
-
-## Recompute Atombench Benchmarks
 #### Step 1: Provide the location of this atombench repository
 For this repository to execute its core functionalities, it must know its own location in the computer's filesystem. To accomplish this, locate a file in the `scripts/` directory called `absolute_path.sh`, and set the `ABS_PATH` environment variable equal to the repository's absolute path, e.g.
 ```bash
@@ -135,7 +197,7 @@ Each benchmark job can be executed manually by navigating to the corresponding d
 touch agpt_benchmark_jarvis.final
 ```
 
-This signals to `Snakemake` that the job’s outputs exist and that the rule should be considered complete.
+This signals to `Snakemake` that the job's outputs exist and that the rule should be considered complete.
 
 To see the rest of the remaining pipeline after manually completing one or more jobs, rerun the dry run:
 ```bash
