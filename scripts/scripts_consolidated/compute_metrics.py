@@ -138,15 +138,12 @@ def compute_atomgen_rmse(df: pd.DataFrame) -> dict:
 @lru_cache(maxsize=20000)
 def amd_vector_from_poscar_text(poscar_text: str, k: int):
     s = reduced_structure_from_poscar_text(poscar_text)
-    motif = np.asarray(s.cart_coords, dtype=np.float64)
-    cell  = np.asarray(s.lattice.matrix, dtype=np.float64)
-    v = amd.AMD((motif, cell), int(k))
+    ps = amd.periodicset_from_pymatgen_structure(s)
+    v = amd.AMD(ps, int(k))
     return tuple(np.asarray(v, dtype=np.float64).tolist())
 
 
-def compute_ccrmse_amd(df: pd.DataFrame, k: int, tau: float):
-    if tau <= 0:
-        return float("nan"), 0
+def compute_ccrmse_amd(df: pd.DataFrame, k: int):
     s2 = 0.0
     n = 0
     for _, row in df.iterrows():
@@ -156,8 +153,7 @@ def compute_ccrmse_amd(df: pd.DataFrame, k: int, tau: float):
             d = float(np.max(np.abs(v_p - v_t)))
             if not np.isfinite(d) or d < 0:
                 continue
-            dc = d if d <= tau else tau
-            s2 += dc * dc
+            s2 += d * d
             n += 1
         except Exception:
             continue
@@ -248,7 +244,6 @@ def main():
     ap.add_argument("--csv",            required=True, help="Path to benchmark CSV (id, target, prediction)")
     ap.add_argument("--output",         default=None,  help="Output JSON path (default: metrics.json next to CSV)")
     ap.add_argument("--benchmark-name", default=None,  help="Value for benchmark_name field (default: parent dir name)")
-    ap.add_argument("--tau",     type=float, default=0.5,   help="ccRMSE clamp threshold")
     ap.add_argument("--amd-k",   type=int,   default=100,   help="AMD vector length k")
     ap.add_argument("--symprec", type=float, default=0.1,   help="Symmetry tolerance for SpacegroupAnalyzer")
     ap.add_argument("--kmin",    type=int,   default=10,    help="Min structures per crystal system")
@@ -312,8 +307,8 @@ def main():
     print("Computing AtomGen RMSE (StructureMatcher) ...", file=sys.stderr)
     rmse_atomgen = compute_atomgen_rmse(df)
 
-    print(f"Computing ccRMSE/AMD (k={args.amd_k}, tau={args.tau}) ...", file=sys.stderr)
-    ccrmse_val, n_ccrmse = compute_ccrmse_amd(df, k=int(args.amd_k), tau=float(args.tau))
+    print(f"Computing ccRMSE/AMD (k={args.amd_k}) ...", file=sys.stderr)
+    ccrmse_val, n_ccrmse = compute_ccrmse_amd(df, k=int(args.amd_k))
 
     print(f"Computing crystal-system MAE (symprec={args.symprec}, kmin={args.kmin}) ...", file=sys.stderr)
     crysys_mae = compute_crystal_system_mae(df, symprec=float(args.symprec), kmin=int(args.kmin))
@@ -336,7 +331,6 @@ def main():
         },
         "ccRMSE": {
             "value": ccrmse_val,
-            "tau":   float(args.tau),
             "amd_k": int(args.amd_k),
             "n_eval": int(n_ccrmse),
         },

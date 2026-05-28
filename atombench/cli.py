@@ -151,15 +151,12 @@ def _compute_atomgen_rmse(df: pd.DataFrame) -> dict:
 
 @lru_cache(maxsize=20000)
 def _amd_vec(poscar_text: str, k: int) -> tuple:
-    s     = _reduced_struct(poscar_text)
-    motif = np.asarray(s.cart_coords, dtype=np.float64)
-    cell  = np.asarray(s.lattice.matrix, dtype=np.float64)
-    return tuple(np.asarray(amd.AMD((motif, cell), int(k)), dtype=np.float64).tolist())
+    s  = _reduced_struct(poscar_text)
+    ps = amd.periodicset_from_pymatgen_structure(s)
+    return tuple(np.asarray(amd.AMD(ps, int(k)), dtype=np.float64).tolist())
 
 
-def _compute_ccrmse(df: pd.DataFrame, k: int, tau: float) -> Tuple[float, int]:
-    if tau <= 0:
-        return float("nan"), 0
+def _compute_ccrmse(df: pd.DataFrame, k: int) -> Tuple[float, int]:
     s2, n = 0.0, 0
     for _, row in df.iterrows():
         try:
@@ -168,8 +165,7 @@ def _compute_ccrmse(df: pd.DataFrame, k: int, tau: float) -> Tuple[float, int]:
             d  = float(np.max(np.abs(vp - vt)))
             if not np.isfinite(d) or d < 0:
                 continue
-            dc  = d if d <= tau else tau
-            s2 += dc * dc
+            s2 += d * d
             n  += 1
         except Exception:
             continue
@@ -220,7 +216,7 @@ def _compute_crystal_system_mae(df: pd.DataFrame, symprec: float, kmin: int) -> 
 
 
 def compute_metrics(df: pd.DataFrame, bench_name: str, *,
-                    tau: float, amd_k: int, symprec: float, kmin: int) -> dict:
+                    amd_k: int, symprec: float, kmin: int) -> dict:
     """Compute all reconstruction metrics for one benchmark DataFrame."""
     click.echo("    extracting Niggli params …")
     xs, ys = _extract_niggli_pairs(df)
@@ -231,8 +227,8 @@ def compute_metrics(df: pd.DataFrame, bench_name: str, *,
     click.echo("    StructureMatcher RMSE …")
     rmse = _compute_atomgen_rmse(df)
 
-    click.echo(f"    ccRMSE/AMD (k={amd_k}, tau={tau}) …")
-    ccrmse_val, n_ccrmse = _compute_ccrmse(df, amd_k, tau)
+    click.echo(f"    ccRMSE/AMD (k={amd_k}) …")
+    ccrmse_val, n_ccrmse = _compute_ccrmse(df, amd_k)
 
     click.echo(f"    crystal-system MAE (symprec={symprec}, kmin={kmin}) …")
     crysys = _compute_crystal_system_mae(df, symprec, kmin)
@@ -242,7 +238,7 @@ def compute_metrics(df: pd.DataFrame, bench_name: str, *,
         "KLD": {k: kld_vals[k] for k in PARAMS_ALL},
         "MAE": {"average_mae": {k: mae_vals[k] for k in PARAMS_ALL}},
         "RMSE": {"AtomGen": rmse},
-        "ccRMSE": {"value": ccrmse_val, "tau": tau, "amd_k": amd_k, "n_eval": n_ccrmse},
+        "ccRMSE": {"value": ccrmse_val, "amd_k": amd_k, "n_eval": n_ccrmse},
         "crystal_system_mae": crysys,
     }
 
@@ -587,8 +583,6 @@ def plot_crystal_system_mae_charts(metrics_dicts: List[dict], outdir: Path, kmin
               help="Output directory for metrics JSON files and plot PNGs.")
 @click.option("--name", "-n", default=None,
               help="Override the benchmark name (only meaningful for a single CSV input).")
-@click.option("--tau", default=0.5, show_default=True, type=float,
-              help="ccRMSE clamp threshold.")
 @click.option("--amd-k", default=100, show_default=True, type=int,
               help="AMD vector length k.")
 @click.option("--symprec", default=0.1, show_default=True, type=float,
@@ -603,7 +597,6 @@ def main(
     path: Path,
     outdir: Path,
     name: Optional[str],
-    tau: float,
     amd_k: int,
     symprec: float,
     kmin: int,
@@ -654,7 +647,7 @@ def main(
                 continue
             click.echo(f"  {len(df)} rows from {csv_path.name}")
             metrics = compute_metrics(df, bench_name,
-                                      tau=tau, amd_k=amd_k, symprec=symprec, kmin=kmin)
+                                      amd_k=amd_k, symprec=symprec, kmin=kmin)
             with metrics_path.open("w") as fh:
                 json.dump(metrics, fh, indent=2)
             click.echo(f"  ✓ {metrics_path.name}")
