@@ -24,13 +24,13 @@ import numpy as np
 from pymatgen.core import Structure
 
 from atombench._common import discover_benchmark_csvs
+from atombench._structure_io import parse_structure
 
 
 # ── Structure helpers ─────────────────────────────────────────────────────────
 def _parse_structure(cell_str: str) -> Optional[Structure]:
     try:
-        text = cell_str.replace("\\n", "\n").replace("\\t", " ").strip()
-        return Structure.from_str(text, fmt="poscar")
+        return parse_structure(cell_str)
     except Exception:
         return None
 
