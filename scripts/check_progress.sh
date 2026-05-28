@@ -74,6 +74,8 @@ declare -A JOB_TO_EXP=(
     [mgen_tc]="mattergen_benchmark_jarvis"
     [mgen_tc_alex]="mattergen_tc_finetune_benchmark_alex"
     [mgen_tc_jrv]="mattergen_tc_finetune_benchmark_jarvis"
+    [agpt_st_al]="agpt_stoich_benchmark_alex"
+    [agpt_st_jv]="agpt_stoich_benchmark_jarvis"
 )
 
 # Experiment → primary SLURM job name(s) (space-separated, for squeue lookup)
@@ -84,8 +86,8 @@ declare -A EXP_JOBS=(
     [cdvae_benchmark_jarvis]="cdvae_jarvis cdvae_tc"
     [flowmm_benchmark_alex]="flow_alex"
     [flowmm_benchmark_jarvis]="flow_tc"
-    [mattergen_base_benchmark_alex]="mgen_alex"
-    [mattergen_base_benchmark_jarvis]="mgen_tc"
+    [agpt_stoich_benchmark_alex]="agpt_st_al"
+    [agpt_stoich_benchmark_jarvis]="agpt_st_jv"
     [mattergen_tc_finetune_benchmark_alex]="mgen_tc_alex"
     [mattergen_tc_finetune_benchmark_jarvis]="mgen_tc_jrv"
 )
@@ -98,8 +100,8 @@ declare -A SLURM_LOGS=(
     [cdvae_benchmark_jarvis]="$REPO/slurm_jarvis_cdvae_train.out $REPO/slurm_jarvis_cdvae_infer.out $REPO/slurm_jarvis_cdvae_benchmark.out"
     [flowmm_benchmark_alex]="$REPO/slurm_alex_flowmm_train.out $REPO/slurm_alex_flowmm_infer.out"
     [flowmm_benchmark_jarvis]="$REPO/slurm_jarvis_flowmm_train.out $REPO/slurm_jarvis_flowmm_infer.out"
-    [mattergen_base_benchmark_alex]="$REPO/slurm_alex_mattergen_train.out $REPO/slurm_alex_mattergen_infer.out"
-    [mattergen_base_benchmark_jarvis]="$REPO/slurm_jarvis_mattergen_train.out $REPO/slurm_jarvis_mattergen_infer.out"
+    [agpt_stoich_benchmark_alex]="$REPO/slurm_alex_agpt_stoich_train.out"
+    [agpt_stoich_benchmark_jarvis]="$REPO/slurm_jarvis_agpt_stoich_train.out"
     [mattergen_tc_finetune_benchmark_alex]="$REPO/slurm_alex_mattergen_tc_finetune_train.out $REPO/slurm_alex_mattergen_tc_finetune_infer.out"
     [mattergen_tc_finetune_benchmark_jarvis]="$REPO/slurm_jarvis_mattergen_tc_finetune_train.out $REPO/slurm_jarvis_mattergen_tc_finetune_infer.out"
 )
@@ -111,8 +113,8 @@ EXPS=(
     cdvae_benchmark_jarvis
     flowmm_benchmark_alex
     flowmm_benchmark_jarvis
-    mattergen_base_benchmark_alex
-    mattergen_base_benchmark_jarvis
+    agpt_stoich_benchmark_alex
+    agpt_stoich_benchmark_jarvis
     mattergen_tc_finetune_benchmark_alex
     mattergen_tc_finetune_benchmark_jarvis
 )
@@ -178,7 +180,7 @@ key_artifact() {
     local exp="$1"
     local dir="$JOB_RUNS/$exp"
     case "$exp" in
-    agpt_benchmark_*)
+    agpt_benchmark_* | agpt_stoich_benchmark_*)
         if [[ -d "$dir/saved" ]] && ls "$dir/saved/" &>/dev/null; then
             printf "${GRN}saved/ dir exists${RST}"
         else
@@ -363,7 +365,7 @@ section_pipeline_table() {
 
         local TRAINED_COL INFERRED_COL FINAL_COL
         case "$EXP" in
-        agpt_benchmark_*)
+        agpt_benchmark_* | agpt_stoich_benchmark_*)
             TRAINED_COL="${DIM}N/A${RST}"; INFERRED_COL="${DIM}N/A${RST}" ;;
         *)
             TRAINED_COL="$(touch_status "$TRAINED_F")"

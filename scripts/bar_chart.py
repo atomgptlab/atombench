@@ -45,13 +45,23 @@ bnchmk_name_dict = {
     "flowmm_benchmark_jarvis":          "FlowMM JARVIS",
     "mattergen_benchmark_alex":         "MatterGen Finetuned Alexandria",
     "mattergen_benchmark_jarvis":       "MatterGen Finetuned JARVIS",
-    "mattergen_base_benchmark_alex":         "MatterGen Base Alexandria",
-    "mattergen_base_benchmark_jarvis":       "MatterGen Base JARVIS",
-    "mattergen_stoich_benchmark_alex":       "MatterGen Stoich Alexandria",
-    "mattergen_stoich_benchmark_jarvis":     "MatterGen Stoich JARVIS",
-    "mattergen_tc_finetune_benchmark_alex":  "MatterGen TC+Stoich Alexandria",
-    "mattergen_tc_finetune_benchmark_jarvis":"MatterGen TC+Stoich JARVIS",
+    "agpt_stoich_benchmark_alex":            "AtomGPT Alexandria",
+    "agpt_stoich_benchmark_jarvis":          "AtomGPT JARVIS",
+    "mattergen_stoich_benchmark_alex":       "MatterGen Alexandria",
+    "mattergen_stoich_benchmark_jarvis":     "MatterGen JARVIS",
+    "mattergen_tc_finetune_benchmark_alex":  "MatterGen Tc Alexandria",
+    "mattergen_tc_finetune_benchmark_jarvis":"MatterGen Tc JARVIS",
 }
+
+ICE_ORDER = [
+    "cdvae_benchmark_alex",              "cdvae_benchmark_jarvis",
+    "agpt_stoich_benchmark_alex",        "agpt_stoich_benchmark_jarvis",
+    "mattergen_stoich_benchmark_alex",   "mattergen_stoich_benchmark_jarvis",
+    "mattergen_tc_finetune_benchmark_alex", "mattergen_tc_finetune_benchmark_jarvis",
+    "agpt_benchmark_alex",               "agpt_benchmark_jarvis",
+    "mattergen_benchmark_alex",          "mattergen_benchmark_jarvis",
+    "flowmm_benchmark_alex",             "flowmm_benchmark_jarvis",
+]
 
 ax_label_map = {
     'a':     r'$a$',
@@ -77,6 +87,7 @@ if any(c not in df.columns for c in kld_cols):
     print("ERROR: Missing KLD columns", file=sys.stderr); sys.exit(1)
 
 kld_df = (df.set_index('benchmark_name')[kld_cols]
+            .reindex([k for k in ICE_ORDER if k in df['benchmark_name'].values])
             .rename(index=bnchmk_name_dict)
             .rename(columns=lambda c: ax_label_map[c.split('.')[-1]]))
 
@@ -99,6 +110,7 @@ else:
     print("ERROR: Could not find MAE columns", file=sys.stderr); sys.exit(1)
 
 mae_df = (df.set_index('benchmark_name')[mae_cols]
+            .reindex([k for k in ICE_ORDER if k in df['benchmark_name'].values])
             .rename(index=bnchmk_name_dict)
             .rename(columns=lambda c: ax_label_map[c.split('.')[-1]]))
 

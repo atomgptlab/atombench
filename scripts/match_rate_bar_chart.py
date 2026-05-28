@@ -45,33 +45,42 @@ bnchmk_name_dict = {
     "flowmm_benchmark_jarvis":           "FlowMM JARVIS",
     "mattergen_benchmark_alex":          "MatterGen Finetuned Alexandria",
     "mattergen_benchmark_jarvis":        "MatterGen Finetuned JARVIS",
-    "mattergen_base_benchmark_alex":     "MatterGen Base Alexandria",
-    "mattergen_base_benchmark_jarvis":   "MatterGen Base JARVIS",
-    "mattergen_stoich_benchmark_alex":   "MatterGen Stoich Alexandria",
-    "mattergen_stoich_benchmark_jarvis": "MatterGen Stoich JARVIS",
-    "mattergen_tc_finetune_benchmark_alex":  "MatterGen TC+Stoich Alexandria",
-    "mattergen_tc_finetune_benchmark_jarvis":"MatterGen TC+Stoich JARVIS",
+    "agpt_stoich_benchmark_alex":        "AtomGPT Alexandria",
+    "agpt_stoich_benchmark_jarvis":      "AtomGPT JARVIS",
+    "mattergen_stoich_benchmark_alex":   "MatterGen Alexandria",
+    "mattergen_stoich_benchmark_jarvis": "MatterGen JARVIS",
+    "mattergen_tc_finetune_benchmark_alex":  "MatterGen Tc Alexandria",
+    "mattergen_tc_finetune_benchmark_jarvis":"MatterGen Tc JARVIS",
 }
+
+ICE_ORDER = [
+    "cdvae_benchmark_alex",              "cdvae_benchmark_jarvis",
+    "agpt_stoich_benchmark_alex",        "agpt_stoich_benchmark_jarvis",
+    "mattergen_stoich_benchmark_alex",   "mattergen_stoich_benchmark_jarvis",
+    "mattergen_tc_finetune_benchmark_alex", "mattergen_tc_finetune_benchmark_jarvis",
+    "agpt_benchmark_alex",               "agpt_benchmark_jarvis",
+    "mattergen_benchmark_alex",          "mattergen_benchmark_jarvis",
+    "flowmm_benchmark_alex",             "flowmm_benchmark_jarvis",
+]
 
 model_colors = {
     "AtomGPT":             "#1f77b4",  # tab:blue
     "CDVAE":               "#ff7f0e",  # tab:orange
     "FlowMM":              "#2ca02c",  # tab:green
     "MatterGen Finetuned": "#d62728",  # tab:red
-    "MatterGen Base":      "#9467bd",  # tab:purple
-    "MatterGen Stoich":    "#8c564b",  # tab:brown
-    "MatterGen TC+Stoich": "#e377c2",  # tab:pink
+    "MatterGen":           "#8c564b",  # tab:brown
+    "MatterGen Tc":        "#e377c2",  # tab:pink
     "Other":               "#7f7f7f",
 }
 
 def infer_model(name: str) -> str:
     name = name.lower()
+    if name.startswith("agpt_stoich_"):            return "AtomGPT"
     if name.startswith("agpt_"):                   return "AtomGPT"
     if name.startswith("cdvae_"):                  return "CDVAE"
     if name.startswith("flowmm_"):                 return "FlowMM"
-    if name.startswith("mattergen_tc_finetune_"):  return "MatterGen TC+Stoich"
-    if name.startswith("mattergen_stoich_"):       return "MatterGen Stoich"
-    if name.startswith("mattergen_base_"):         return "MatterGen Base"
+    if name.startswith("mattergen_tc_finetune_"):  return "MatterGen Tc"
+    if name.startswith("mattergen_stoich_"):       return "MatterGen"
     if name.startswith("mattergen_"):              return "MatterGen Finetuned"
     return "Other"
 
@@ -89,7 +98,9 @@ if match_col not in df.columns:
     print("ERROR: Missing match_rate column", file=sys.stderr)
     sys.exit(1)
 
+ice_keys = [k for k in ICE_ORDER if k in df['benchmark_name'].values]
 match_df = (df.set_index('benchmark_name')[[match_col]]
+              .reindex(ice_keys)
               .rename(index=bnchmk_name_dict)
               .rename(columns={match_col: 'Match Rate'}))
 
@@ -97,7 +108,7 @@ x_labels  = match_df.index.tolist()
 heights   = match_df["Match Rate"].astype(float).tolist()
 bar_colors = [
     model_colors.get(infer_model(name), model_colors["Other"])
-    for name in df.sort_values("benchmark_name")["benchmark_name"]
+    for name in ice_keys
 ]
 
 import numpy as np

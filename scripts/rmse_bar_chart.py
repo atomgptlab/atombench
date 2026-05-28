@@ -48,22 +48,32 @@ bnchmk_name_dict = {
     "flowmm_benchmark_jarvis":          "FlowMM JARVIS",
     "mattergen_benchmark_alex":         "MatterGen Finetuned Alexandria",
     "mattergen_benchmark_jarvis":       "MatterGen Finetuned JARVIS",
-    "mattergen_base_benchmark_alex":         "MatterGen Base Alexandria",
-    "mattergen_base_benchmark_jarvis":       "MatterGen Base JARVIS",
-    "mattergen_stoich_benchmark_alex":       "MatterGen Stoich Alexandria",
-    "mattergen_stoich_benchmark_jarvis":     "MatterGen Stoich JARVIS",
-    "mattergen_tc_finetune_benchmark_alex":  "MatterGen TC+Stoich Alexandria",
-    "mattergen_tc_finetune_benchmark_jarvis":"MatterGen TC+Stoich JARVIS",
+    "agpt_stoich_benchmark_alex":            "AtomGPT Alexandria",
+    "agpt_stoich_benchmark_jarvis":          "AtomGPT JARVIS",
+    "mattergen_stoich_benchmark_alex":       "MatterGen Alexandria",
+    "mattergen_stoich_benchmark_jarvis":     "MatterGen JARVIS",
+    "mattergen_tc_finetune_benchmark_alex":  "MatterGen Tc Alexandria",
+    "mattergen_tc_finetune_benchmark_jarvis":"MatterGen Tc JARVIS",
 }
+
+ICE_ORDER = [
+    "cdvae_benchmark_alex",              "cdvae_benchmark_jarvis",
+    "agpt_stoich_benchmark_alex",        "agpt_stoich_benchmark_jarvis",
+    "mattergen_stoich_benchmark_alex",   "mattergen_stoich_benchmark_jarvis",
+    "mattergen_tc_finetune_benchmark_alex", "mattergen_tc_finetune_benchmark_jarvis",
+    "agpt_benchmark_alex",               "agpt_benchmark_jarvis",
+    "mattergen_benchmark_alex",          "mattergen_benchmark_jarvis",
+    "flowmm_benchmark_alex",             "flowmm_benchmark_jarvis",
+]
 
 def infer_model(name: str) -> str:
     name = name.lower()
+    if name.startswith("agpt_stoich_"):           return "AtomGPT"
     if name.startswith("agpt_"):                  return "AtomGPT"
     if name.startswith("cdvae_"):                 return "CDVAE"
     if name.startswith("flowmm_"):                return "FlowMM"
-    if name.startswith("mattergen_tc_finetune_"): return "MatterGen TC+Stoich"
-    if name.startswith("mattergen_stoich_"):       return "MatterGen Stoich"
-    if name.startswith("mattergen_base_"):         return "MatterGen Base"
+    if name.startswith("mattergen_tc_finetune_"): return "MatterGen Tc"
+    if name.startswith("mattergen_stoich_"):       return "MatterGen"
     if name.startswith("mattergen_"):              return "MatterGen Finetuned"
     return "Other"
 
@@ -96,14 +106,15 @@ model_colors = {
     "CDVAE":                "#ff7f0e",  # tab:orange
     "FlowMM":               "#2ca02c",  # tab:green
     "MatterGen Finetuned":  "#d62728",  # tab:red
-    "MatterGen Base":       "#9467bd",  # tab:purple
-    "MatterGen Stoich":     "#8c564b",  # tab:brown
-    "MatterGen TC+Stoich":  "#e377c2",  # tab:pink
+    "MatterGen":            "#8c564b",  # tab:brown
+    "MatterGen Tc":         "#e377c2",  # tab:pink
     "Other":                "#7f7f7f",
 }
 plot_df["color"] = plot_df["model"].map(model_colors)
 
-# Preserve the same ordering as other charts (alphabetical by subdir)
+ice_keys = [k for k in ICE_ORDER if k in plot_df["benchmark_name"].values]
+plot_df = plot_df.set_index("benchmark_name").reindex(ice_keys).reset_index()
+
 x_labels = plot_df["display"].tolist()
 heights  = plot_df["RMSE"].astype(float).tolist()
 colors   = plot_df["color"].tolist()
@@ -142,9 +153,8 @@ handles = [
     mpatches.Patch(color=model_colors["CDVAE"],               label="CDVAE"),
     mpatches.Patch(color=model_colors["FlowMM"],              label="FlowMM"),
     mpatches.Patch(color=model_colors["MatterGen Finetuned"], label="MatterGen Finetuned"),
-    mpatches.Patch(color=model_colors["MatterGen Base"],      label="MatterGen Base"),
-    mpatches.Patch(color=model_colors["MatterGen Stoich"],    label="MatterGen Stoich"),
-    mpatches.Patch(color=model_colors["MatterGen TC+Stoich"], label="MatterGen TC+Stoich"),
+    mpatches.Patch(color=model_colors["MatterGen"],           label="MatterGen"),
+    mpatches.Patch(color=model_colors["MatterGen Tc"],        label="MatterGen Tc"),
 ]
 ax.legend(handles=handles, title_fontsize=15, fontsize=15)
 

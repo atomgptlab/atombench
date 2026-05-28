@@ -36,14 +36,14 @@ mpl.rcParams.update({
 WVU_BLUE = "#002855"  # target
 WVU_GOLD = "#EEAA00"  # predicted
 
-MODELS = ["agpt", "cdvae", "flowmm", "mattergen_base", "mattergen_stoich", "mattergen_tc_finetune", "mattergen"]
+MODELS = ["cdvae", "agpt_stoich", "mattergen_stoich", "mattergen_tc_finetune", "agpt", "mattergen", "flowmm"]
 MODEL_LABEL = {
+    "agpt_stoich":           "AtomGPT",
     "agpt":                  "AtomGPT",
     "cdvae":                 "CDVAE",
     "flowmm":                "FlowMM",
-    "mattergen_base":        "MatterGen\nBase",
-    "mattergen_stoich":      "MatterGen\nStoich",
-    "mattergen_tc_finetune": "MatterGen\nTC+Stoich",
+    "mattergen_stoich":      "MatterGen",
+    "mattergen_tc_finetune": "MatterGen\nTc",
     "mattergen":             "MatterGen\nFinetuned",
 }
 PARAMS = ["a", "c", "gamma"]
