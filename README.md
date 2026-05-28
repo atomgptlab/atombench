@@ -83,7 +83,7 @@ Moreover, we use `mamba` to perform the FlowMM environment setup. To determine i
 #### Step 2: Download this repository
 Download this repository using the following command:
 ```bash
-git clone git@github.com:atomgptlab/atombench_inverse.git
+git clone git@github.com:atomgptlab/atombench.git
 ```
 NOTE: This repository must be cloned using `ssh` rather than `https` due to constraints from the generative models used in this repository.
 
