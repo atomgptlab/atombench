@@ -32,8 +32,6 @@ OUTDIR/
 
 Per-benchmark `metrics.json` files are also written beside each input CSV for caching.
 
-### [Tutorial in Google Colab](https://github.com/crhysc/jarvis-tools-notebooks/blob/master/atombench_example.ipynb)
-
 ---
 
 ## Cite Us
