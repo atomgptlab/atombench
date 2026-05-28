@@ -42,8 +42,6 @@ atombench path/to/benchmark.csv --metrics-only
 
 See `atombench --help` (and `atombench-plots --help`, etc.) for the full option reference.
 
-### [Tutorial in Google Colab](https://github.com/crhysc/jarvis-tools-notebooks/blob/master/atombench_example.ipynb)
-
 ---
 
 ## Cite Us!
@@ -63,6 +61,7 @@ If you use AtomBench in your research, please cite:
 ---
 
 ## Recompute AtomBench Benchmarks
+### [Tutorial in Google Colab](https://github.com/crhysc/jarvis-tools-notebooks/blob/master/atombench_example.ipynb)
 
 The sections below describe how to re-run the full Snakemake pipeline on an HPC cluster to reproduce the benchmark results from scratch.
 
