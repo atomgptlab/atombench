@@ -18,7 +18,8 @@ dependencies = [
 ]
 
 [project.scripts]
-atombench = "atombench.cli:main"
+atombench       = "atombench.cli:main"
+atombench-plots = "atombench.plots:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

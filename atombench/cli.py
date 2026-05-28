@@ -17,21 +17,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import click
-
-# matplotlib must be configured before pyplot is imported
-import matplotlib as mpl
-mpl.use("Agg")
-mpl.rcParams.update({
-    "font.family": "serif",
-    "axes.linewidth": 0.8,
-    "patch.linewidth": 0.0,
-    "font.serif": ["Times New Roman", "Times", "Nimbus Roman No9 L", "DejaVu Serif", "STIX"],
-})
-
-import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
-
 import numpy as np
 import pandas as pd
 from scipy.stats import entropy as scipy_entropy
@@ -43,6 +28,18 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 import amd
 
+# Plotting functions live in atombench.plots; importing here sets the Agg backend.
+from atombench.plots import (
+    plot_distribution,
+    plot_kld_bar_chart,
+    plot_mae_abc_bar_chart,
+    plot_mae_angles_bar_chart,
+    plot_rmse_bar_chart,
+    plot_ccrmse_bar_chart,
+    plot_match_rate_bar_chart,
+    plot_crystal_system_mae_from_json,
+)
+
 # ── Constants ─────────────────────────────────────────────────────────────────
 CRYSYS_ALL = [
     "triclinic", "monoclinic", "orthorhombic",
@@ -52,16 +49,7 @@ CRYSYS_PLOT_ORDER = [
     "cubic", "hexagonal", "trigonal",
     "tetragonal", "orthorhombic", "monoclinic",
 ]
-AX_LABEL_MAP = {
-    "a": r"$a$", "b": r"$b$", "c": r"$c$",
-    "alpha": r"$\alpha$", "beta": r"$\beta$", "gamma": r"$\gamma$",
-}
 PARAMS_ALL = ("a", "b", "c", "alpha", "beta", "gamma")
-
-WVU_BLUE    = "#002855"
-WVU_GOLD    = "#EEAA00"
-LEN_GRANITE = ["#4A6272", "#89A9BC", "#D6E3EC"]
-ANG_GRANITE = ["#6A5560", "#B08A97", "#E7D6DC"]
 
 
 # ── Pymatgen / Niggli helpers ──────────────────────────────────────────────────
@@ -137,7 +125,7 @@ def _compute_atomgen_rmse(df: pd.DataFrame) -> dict:
     if n_total == 0 or n_matched == 0:
         return {
             "mean_normalized_cartesian_rms": float("nan"),
-            "mean_cartesian_rms_angstrom": float("nan"),
+            "mean_cartesian_rms_angstrom":   float("nan"),
             "match_rate": float("nan") if n_total == 0 else round(n_matched / n_total, 6),
             **base,
         }
@@ -221,8 +209,8 @@ def compute_metrics(df: pd.DataFrame, bench_name: str, *,
     click.echo("    extracting Niggli params …")
     xs, ys = _extract_niggli_pairs(df)
 
-    mae_vals = {k: _mae(xs[k], ys[k])                                    for k in PARAMS_ALL}
-    kld_vals = {k: _kld(xs[k], ys[k]) if xs[k] else float("nan")         for k in PARAMS_ALL}
+    mae_vals = {k: _mae(xs[k], ys[k])                             for k in PARAMS_ALL}
+    kld_vals = {k: _kld(xs[k], ys[k]) if xs[k] else float("nan") for k in PARAMS_ALL}
 
     click.echo("    StructureMatcher RMSE …")
     rmse = _compute_atomgen_rmse(df)
@@ -276,7 +264,6 @@ def discover_benchmarks(path: Path) -> List[Tuple[str, Path]]:
     - Single CSV file  → one benchmark.
     - Flat directory   → one benchmark per .csv file found directly inside.
     - Structured dir   → one benchmark per subdirectory that contains a CSV.
-      (If both direct CSVs and subdirs-with-CSVs exist, direct CSVs take priority.)
     """
     if path.is_file():
         return [(path.stem, path)]
@@ -295,287 +282,6 @@ def discover_benchmarks(path: Path) -> List[Tuple[str, Path]]:
     return subdir_benchmarks
 
 
-# ── Plotting helpers ───────────────────────────────────────────────────────────
-def _style_bar_axes(ax, ylabel: str, title: str) -> None:
-    ax.set_ylabel(ylabel, fontsize=16)
-    ax.set_title(title, fontsize=22)
-    ax.legend(title="Lattice Parameter", title_fontsize=15, fontsize=15)
-    plt.xticks(rotation=30, ha="right", fontsize=13)
-    plt.yticks(fontsize=15)
-    plt.tight_layout()
-
-
-# ── Individual plot functions ──────────────────────────────────────────────────
-def plot_distribution(bench_name: str, csv_path: Path, outdir: Path) -> None:
-    plt.rcParams.update({"font.size": 18})
-    df = pd.read_csv(csv_path)
-    df = df.rename(columns={c: c.strip().lower() for c in df.columns})
-
-    xs = {k: [] for k in PARAMS_ALL}
-    ys = {k: [] for k in PARAMS_ALL}
-    for _, row in df.iterrows():
-        try:
-            tp = _niggli_params(str(row["target"]))
-            pp = _niggli_params(str(row["prediction"]))
-            for i, k in enumerate(PARAMS_ALL):
-                xs[k].append(tp[i])
-                ys[k].append(pp[i])
-        except Exception:
-            continue
-
-    def _overlay(ax, x, y, bins, xlabel, title):
-        wx = np.ones_like(x, dtype=float) / max(1, len(x)) * 100
-        wy = np.ones_like(y, dtype=float) / max(1, len(y)) * 100
-        ax.hist(x, bins=bins, weights=wx, alpha=0.6, color="tab:blue", label="target")
-        ax.hist(y, bins=bins, weights=wy, alpha=0.6, color="plum",     label="predicted")
-        ax.set_xlabel(xlabel)
-        ax.set_title(title)
-        return ax
-
-    fig  = plt.figure(figsize=(14, 8))
-    grid = GridSpec(2, 3)
-
-    _overlay(plt.subplot(grid[0, 0]),
-             xs["a"], ys["a"], np.arange(2, 7, 0.1),
-             r"a ($\AA$)", "(a)").set_ylabel("Materials dist.")
-    plt.legend()
-    _overlay(plt.subplot(grid[0, 1]), xs["c"],     ys["c"],     np.arange(2, 7, 0.1),    r"c ($\AA$)",           "(b)")
-    _overlay(plt.subplot(grid[0, 2]), xs["gamma"], ys["gamma"], np.arange(30, 150, 10),  r"$\gamma$ ($^\circ$)", "(c)")
-
-    x_spg, y_spg, x_Z, y_Z, x_lat, y_lat = [], [], [], [], [], []
-    lat_order  = ["triclinic", "monoclinic", "orthorhombic",
-                  "tetragonal", "trigonal", "hexagonal", "cubic"]
-    lat_to_idx = {name: i for i, name in enumerate(lat_order)}
-
-    for _, row in df.iterrows():
-        try:
-            st    = _reduced_struct(str(row["target"]))
-            sp    = _reduced_struct(str(row["prediction"]))
-            x_Z.append(st.composition.weight)
-            y_Z.append(sp.composition.weight)
-            sga_t = SpacegroupAnalyzer(st, symprec=0.1)
-            sga_p = SpacegroupAnalyzer(sp, symprec=0.1)
-            x_spg.append(sga_t.get_space_group_number())
-            y_spg.append(sga_p.get_space_group_number())
-            x_lat.append(sga_t.get_crystal_system())
-            y_lat.append(sga_p.get_crystal_system())
-        except Exception:
-            continue
-
-    _overlay(plt.subplot(grid[1, 0]),
-             x_spg, y_spg, np.arange(1, 231, 10),
-             "Spacegroup number", "(d)").set_ylabel("Materials dist.")
-
-    valid  = [(lx, ly) for lx, ly in zip(x_lat, y_lat) if lx and ly]
-    xl, yl = zip(*valid) if valid else ([], [])
-    xl_c   = np.bincount([lat_to_idx[l] for l in xl], minlength=len(lat_order))
-    yl_c   = np.bincount([lat_to_idx[l] for l in yl], minlength=len(lat_order))
-    ax_lat = plt.subplot(grid[1, 1])
-    pos    = np.arange(len(lat_order))
-    ax_lat.bar(pos, xl_c, width=0.4, alpha=0.6, label="target",    color="tab:blue")
-    ax_lat.bar(pos, yl_c, width=0.4, alpha=0.6, label="predicted", color="plum")
-    ax_lat.set_xticks(pos)
-    ax_lat.set_xticklabels((pos + 1).tolist(), rotation=0, ha="center")
-    ax_lat.set_xlabel("Crystal system number")
-    ax_lat.set_title("(e)")
-
-    _overlay(plt.subplot(grid[1, 2]), x_Z, y_Z, np.arange(15, 2000, 100), "Weight (AMU)", "(f)")
-
-    plt.tight_layout()
-    fig.subplots_adjust(top=0.88)
-    plt.suptitle(bench_name, fontsize=30)
-    out_png = outdir / f"{bench_name}_distribution.png"
-    plt.savefig(out_png, format="png", dpi=200)
-    plt.close(fig)
-    click.echo(f"  ✓ {out_png.name}")
-
-
-def plot_kld_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
-    kld_cols = [f"KLD.{k}" for k in PARAMS_ALL]
-    if any(c not in df.columns for c in kld_cols):
-        click.echo("  ⚠ Missing KLD columns — skipping KLD bar chart", err=True)
-        return
-    kld_df = (df.set_index("benchmark_name")[kld_cols]
-                .rename(columns=lambda c: AX_LABEL_MAP[c.split(".")[-1]]))
-    fig, ax = plt.subplots(figsize=(10, 8))
-    kld_df.plot(kind="bar", edgecolor="k", ax=ax)
-    _style_bar_axes(ax, "KL Divergence (Nats)",
-                    "KL Divergence of Predicted vs. Target\nLattice-Parameter Distributions")
-    plt.savefig(outdir / "comparison_bar_chart.png", dpi=300)
-    plt.close(fig)
-    click.echo("  ✓ comparison_bar_chart.png")
-
-
-def plot_mae_abc_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
-    for cand in ([f"MAE.average_mae.{k}" for k in PARAMS_ALL],
-                 [f"MAE.{k}" for k in PARAMS_ALL]):
-        if all(c in df.columns for c in cand):
-            mae_cols = cand
-            break
-    else:
-        click.echo("  ⚠ Missing MAE columns — skipping MAE bar charts", err=True)
-        return
-    mae_df = (df.set_index("benchmark_name")[mae_cols]
-                .rename(columns=lambda c: AX_LABEL_MAP[c.split(".")[-1]]))
-    length_cols = [AX_LABEL_MAP[k] for k in ("a", "b", "c")]
-    fig, ax = plt.subplots(figsize=(10, 8))
-    mae_df[length_cols].plot(kind="bar", edgecolor="k", ax=ax)
-    _style_bar_axes(ax, "Mean Absolute Error (Å)", "Mean Absolute Error – Lattice Lengths (Å)")
-    plt.savefig(outdir / "mae_bar_chart_abc.png", dpi=300)
-    plt.close(fig)
-    click.echo("  ✓ mae_bar_chart_abc.png")
-
-
-def plot_mae_angles_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
-    for cand in ([f"MAE.average_mae.{k}" for k in PARAMS_ALL],
-                 [f"MAE.{k}" for k in PARAMS_ALL]):
-        if all(c in df.columns for c in cand):
-            mae_cols = cand
-            break
-    else:
-        return
-    mae_df = (df.set_index("benchmark_name")[mae_cols]
-                .rename(columns=lambda c: AX_LABEL_MAP[c.split(".")[-1]]))
-    angle_cols = [AX_LABEL_MAP[k] for k in ("alpha", "beta", "gamma")]
-    fig, ax = plt.subplots(figsize=(10, 8))
-    mae_df[angle_cols].plot(kind="bar", edgecolor="k",
-                            color=["red", "purple", "brown"], ax=ax)
-    _style_bar_axes(ax, "Mean Absolute Error (°)", "Mean Absolute Error – Lattice Angles (°)")
-    plt.savefig(outdir / "mae_bar_chart_angles.png", dpi=300)
-    plt.close(fig)
-    click.echo("  ✓ mae_bar_chart_angles.png")
-
-
-def plot_rmse_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
-    for cand in ["RMSE.AtomGen.mean_cartesian_rms_angstrom",
-                 "RMSE.AtomGen.mean_normalized_cartesian_rms",
-                 "RMSE.AtomGen", "RMSE"]:
-        if cand in df.columns:
-            rmse_col = cand
-            break
-    else:
-        click.echo("  ⚠ No RMSE column found — skipping RMSE bar chart", err=True)
-        return
-
-    plot_df = df[["benchmark_name", rmse_col]].rename(columns={rmse_col: "RMSE"}).copy()
-    unique_names = list(dict.fromkeys(plot_df["benchmark_name"]))
-    palette      = plt.cm.tab10.colors
-    color_map    = {n: palette[i % len(palette)] for i, n in enumerate(unique_names)}
-
-    fig, ax = plt.subplots(figsize=(10, 8))
-    pos = np.arange(len(plot_df))
-    ax.bar(pos, plot_df["RMSE"].astype(float).tolist(),
-           width=0.55, edgecolor="k", linewidth=0.8,
-           color=[color_map[n] for n in plot_df["benchmark_name"]])
-    ax.set_xticks(pos)
-    ax.set_xticklabels(plot_df["benchmark_name"].tolist(), rotation=30, ha="right", fontsize=13)
-    handles = [mpatches.Patch(color=color_map[n], label=n) for n in unique_names]
-    ax.legend(handles=handles, title_fontsize=15, fontsize=15)
-    ax.set_ylabel("Average RMSE (Å)", fontsize=16)
-    ax.set_title("Average Root Mean Squared Error\nfor Predicted vs. Target Atomic Coordinates",
-                 fontsize=22)
-    plt.yticks(fontsize=15)
-    plt.tight_layout()
-    plt.savefig(outdir / "rmse_bar_chart.png", dpi=300)
-    plt.close(fig)
-    click.echo("  ✓ rmse_bar_chart.png")
-
-
-def plot_match_rate_bar_chart(df: pd.DataFrame, outdir: Path) -> None:
-    mr_col = "RMSE.AtomGen.match_rate"
-    if mr_col not in df.columns:
-        click.echo("  ⚠ No match_rate column — skipping match rate chart", err=True)
-        return
-    plot_df = df[["benchmark_name", mr_col]].rename(columns={mr_col: "match_rate"}).copy()
-    fig, ax = plt.subplots(figsize=(10, 8))
-    pos = np.arange(len(plot_df))
-    ax.bar(pos, plot_df["match_rate"].astype(float).tolist(),
-           width=0.55, edgecolor="k", linewidth=0.8, color=WVU_BLUE)
-    ax.set_xticks(pos)
-    ax.set_xticklabels(plot_df["benchmark_name"].tolist(), rotation=30, ha="right", fontsize=13)
-    ax.set_ylabel("Match Rate", fontsize=16)
-    ax.set_title("Structure Matcher Match Rate (STOL=0.5)", fontsize=22)
-    ax.set_ylim(0, 1)
-    plt.yticks(fontsize=15)
-    plt.tight_layout()
-    plt.savefig(outdir / "match_rate_bar_chart.png", dpi=300)
-    plt.close(fig)
-    click.echo("  ✓ match_rate_bar_chart.png")
-
-
-def plot_crystal_system_mae_charts(metrics_dicts: List[dict], outdir: Path, kmin: int) -> None:
-    pooled_sum:   Dict[str, Dict[str, float]] = defaultdict(lambda: defaultdict(float))
-    pooled_count: Dict[str, int]              = defaultdict(int)
-
-    for m in metrics_dicts:
-        for entry in m.get("crystal_system_mae", {}).get("by_system", []):
-            cs, n = entry["crystal_system"], int(entry["n_reconstructions"])
-            for param, val in entry["mae"].items():
-                if np.isfinite(val):
-                    pooled_sum[cs][param] += float(val) * n
-            pooled_count[cs] += n
-
-    systems = [cs for cs in CRYSYS_PLOT_ORDER if pooled_count.get(cs, 0) >= kmin]
-    if not systems:
-        click.echo("  ⚠ No crystal systems pass kmin — skipping crystal-system MAE charts",
-                   err=True)
-        return
-
-    data, counts_arr = {}, []
-    for cs in systems:
-        n      = pooled_count[cs]
-        data[cs] = {p: pooled_sum[cs][p] / n for p in PARAMS_ALL}
-        counts_arr.append(n)
-
-    g       = pd.DataFrame(data).T[list(PARAMS_ALL)]
-    g.index = [s.capitalize() for s in systems]
-    plot_df = g.rename(columns=AX_LABEL_MAP)
-    counts_arr = np.array(counts_arr, dtype=int)
-
-    def _add_counts(ax, counts, tops):
-        current_ylim = ax.get_ylim()
-        ymax = max(current_ylim[1], float(np.max(tops)) * 1.22 if len(tops) else current_ylim[1])
-        ax.set_ylim(0, ymax)
-        off = 0.02 * ax.get_ylim()[1]
-        for i, (n, top) in enumerate(zip(counts, tops)):
-            ax.text(i, float(top) + off, f"n={int(n)}", ha="center", va="bottom", fontsize=12)
-
-    def _style_crysys(ax, ylabel, title):
-        ax.set_ylabel(ylabel, fontsize=16)
-        ax.set_title(title, fontsize=22)
-        ax.legend(title="Lattice Parameter", title_fontsize=15, fontsize=15,
-                  loc="center left", bbox_to_anchor=(0.02, 0.66), borderaxespad=0.0)
-        plt.xticks(rotation=30, ha="right", fontsize=13)
-        plt.yticks(fontsize=15)
-
-    length_cols = [AX_LABEL_MAP[k] for k in ("a", "b", "c")]
-    angle_cols  = [AX_LABEL_MAP[k] for k in ("alpha", "beta", "gamma")]
-
-    len_tops = g[["a", "b", "c"]].max(axis=1).to_numpy(dtype=float)
-    fig, ax  = plt.subplots(figsize=(10, 8))
-    plot_df[length_cols].plot(kind="bar", edgecolor="k", ax=ax, color=LEN_GRANITE)
-    _style_crysys(ax, "Mean Absolute Error (Å)",
-                  "Mean Absolute Error by Crystal System\n"
-                  "Results Pooled from All Benchmarks\nLattice Lengths (Å)")
-    _add_counts(ax, counts_arr, len_tops)
-    fig.tight_layout()
-    plt.savefig(outdir / "crystal_system_mae_bar_chart_abc.png", dpi=500, bbox_inches="tight")
-    plt.close(fig)
-    click.echo("  ✓ crystal_system_mae_bar_chart_abc.png")
-
-    ang_tops = g[["alpha", "beta", "gamma"]].max(axis=1).to_numpy(dtype=float)
-    fig, ax  = plt.subplots(figsize=(10, 8))
-    plot_df[angle_cols].plot(kind="bar", edgecolor="k", ax=ax, color=ANG_GRANITE)
-    _style_crysys(ax, "Mean Absolute Error (°)",
-                  "Mean Absolute Error by Crystal System\n"
-                  "Results Pooled from All Benchmarks\nLattice Angles (°)")
-    _add_counts(ax, counts_arr, ang_tops)
-    fig.tight_layout()
-    plt.savefig(outdir / "crystal_system_mae_bar_chart_angles.png", dpi=500, bbox_inches="tight")
-    plt.close(fig)
-    click.echo("  ✓ crystal_system_mae_bar_chart_angles.png")
-
-
 # ── CLI ────────────────────────────────────────────────────────────────────────
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.argument("path", type=click.Path(exists=True, path_type=Path))
@@ -588,7 +294,7 @@ def plot_crystal_system_mae_charts(metrics_dicts: List[dict], outdir: Path, kmin
 @click.option("--symprec", default=0.1, show_default=True, type=float,
               help="Symmetry tolerance for SpacegroupAnalyzer (Å).")
 @click.option("--kmin", default=10, show_default=True, type=int,
-              help="Minimum structures per crystal system for the crystal-system MAE charts.")
+              help="Minimum structures per crystal system for crystal-system MAE charts.")
 @click.option("--skip-metrics", is_flag=True,
               help="Re-use an existing metrics JSON if present; skip recomputation.")
 @click.option("--metrics-only", is_flag=True,
@@ -617,7 +323,6 @@ def main(
     outdir = outdir.resolve()
     outdir.mkdir(parents=True, exist_ok=True)
 
-    # ── Discover benchmarks ───────────────────────────────────────────────────
     benchmarks = discover_benchmarks(path.resolve())
     if not benchmarks:
         raise click.ClickException(f"No benchmark CSV files found at: {path}")
@@ -627,8 +332,7 @@ def main(
 
     click.echo(f"Found {len(benchmarks)} benchmark(s).")
 
-    # ── Compute (or load) metrics ─────────────────────────────────────────────
-    all_results: List[Tuple[str, Path, dict]] = []   # (name, csv_path, metrics)
+    all_results: List[Tuple[str, Path, dict]] = []
 
     for bench_name, csv_path in benchmarks:
         click.echo(f"\n── {bench_name}")
@@ -661,17 +365,14 @@ def main(
         click.echo(f"\nDone (metrics only). Output: {outdir}")
         return
 
-    # ── Generate plots ────────────────────────────────────────────────────────
     click.echo("\n── Plots")
 
-    # Distribution plots — one per benchmark
     for bench_name, csv_path, _ in all_results:
         try:
             plot_distribution(bench_name, csv_path, outdir)
         except Exception as e:
             click.echo(f"  ⚠ {bench_name}: distribution plot failed — {e}", err=True)
 
-    # Aggregate bar charts — all benchmarks on one figure each
     all_metrics = [m for _, _, m in all_results]
     rows = [pd.json_normalize(m, sep=".", max_level=3).iloc[0].to_dict() for m in all_metrics]
     df_metrics = pd.DataFrame(rows)
@@ -680,16 +381,14 @@ def main(
     plot_mae_abc_bar_chart(df_metrics, outdir)
     plot_mae_angles_bar_chart(df_metrics, outdir)
     plot_rmse_bar_chart(df_metrics, outdir)
+    plot_ccrmse_bar_chart(df_metrics, outdir)
     plot_match_rate_bar_chart(df_metrics, outdir)
 
-    # Crystal-system MAE charts
     if any("crystal_system_mae" in m for m in all_metrics):
         try:
-            plot_crystal_system_mae_charts(all_metrics, outdir, kmin=kmin)
+            plot_crystal_system_mae_from_json(all_metrics, outdir, kmin=kmin)
         except Exception as e:
             click.echo(f"  ⚠ crystal-system MAE charts failed — {e}", err=True)
-    else:
-        click.echo("  ⚠ no crystal_system_mae data — skipping crystal-system charts", err=True)
 
     click.echo(f"\nAll done. Output: {outdir}")
 

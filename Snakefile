@@ -5,8 +5,8 @@ EXPS = [
     "cdvae_benchmark_jarvis",
     "flowmm_benchmark_alex",
     "flowmm_benchmark_jarvis",
-    "mattergen_base_benchmark_alex",
-    "mattergen_base_benchmark_jarvis",
+    "agpt_stoich_benchmark_alex",
+    "agpt_stoich_benchmark_jarvis",
     "mattergen_stoich_benchmark_alex",
     "mattergen_stoich_benchmark_jarvis",
     "mattergen_tc_finetune_benchmark_alex",
@@ -27,8 +27,10 @@ rule all:
         "benchmarks.verified",
         "grid_charts.created",
         "rmse_chart.made",
+        "ccrmse_chart.made",
         "crystal_system_mae_charts.created",
-        "match_rate_chart.made"
+        "match_rate_chart.made",
+        "all_figures.collected"
 
 rule make_atomgpt_env:
     output:
@@ -147,7 +149,7 @@ rule make_bar_charts:
     output:
         touch("charts.made")
     shell:
-        "cd job_runs/ && python ../scripts/bar_chart.py"
+        "atombench-plots --root job_runs/ --outdir figures/ --only kld mae"
 
 rule make_overlay_charts:
     input:
@@ -166,9 +168,7 @@ rule make_grid_charts:
     output:
         touch("grid_charts.created")
     shell:
-        """
-        python scripts/grid_charts.py
-        """
+        "atombench-plots --root job_runs/ --outdir figures/ --only grid"
 
 rule make_crystal_system_mae_charts:
     input:
@@ -176,7 +176,7 @@ rule make_crystal_system_mae_charts:
     output:
         touch("crystal_system_mae_charts.created")
     shell:
-        "python scripts/crystal_system_mae.py --root job_runs --symprec 0.1 --kmin 10 --outdir ./figures"
+        "atombench-plots --root job_runs/ --outdir figures/ --only crystal-system-mae --symprec 0.1 --kmin 10"
 
 rule make_rmse_chart:
     input:
@@ -184,7 +184,15 @@ rule make_rmse_chart:
     output:
         touch("rmse_chart.made")
     shell:
-        "cd job_runs/ && python ../scripts/rmse_bar_chart.py"
+        "atombench-plots --root job_runs/ --outdir figures/ --only rmse"
+
+rule make_ccrmse_chart:
+    input:
+        "metrics.computed"
+    output:
+        touch("ccrmse_chart.made")
+    shell:
+        "atombench-plots --root job_runs/ --outdir figures/ --only ccrmse"
 
 rule make_match_rate_chart:
     input:
@@ -192,5 +200,43 @@ rule make_match_rate_chart:
     output:
         touch("match_rate_chart.made")
     shell:
-        "cd job_runs/ && python ../scripts/match_rate_bar_chart.py"
+        "atombench-plots --root job_runs/ --outdir figures/ --only match-rate"
+
+rule collect_all_figures:
+    input:
+        "charts.made",
+        "overlay_charts.created",
+        "grid_charts.created",
+        "rmse_chart.made",
+        "ccrmse_chart.made",
+        "crystal_system_mae_charts.created",
+        "match_rate_chart.made"
+    output:
+        touch("all_figures.collected")
+    shell:
+        """
+        mkdir -p all_figures/comparison \
+                 all_figures/distributions \
+                 all_figures/crystal_system \
+                 all_figures/reconstruction \
+                 all_figures/overlays \
+                 all_figures/dataset
+        cp figures/comparison_bar_chart.png    all_figures/comparison/
+        cp figures/mae_bar_chart_abc.png       all_figures/comparison/
+        cp figures/mae_bar_chart_angles.png    all_figures/comparison/
+        cp figures/rmse_bar_chart.png          all_figures/comparison/
+        cp figures/ccrmse_bar_chart.png        all_figures/comparison/
+        cp figures/match_rate_bar_chart.png    all_figures/comparison/
+        find job_runs -maxdepth 2 -name '*_distribution.png' \
+            -exec cp {{}} all_figures/distributions/ \\;
+        cp figures/crystal_system_mae_bar_chart_abc.png    all_figures/crystal_system/
+        cp figures/crystal_system_mae_bar_chart_angles.png all_figures/crystal_system/
+        cp figures/alexandria_reconstruction_grid.png all_figures/reconstruction/ 2>/dev/null || true
+        cp figures/jarvis_reconstruction_grid.png     all_figures/reconstruction/ 2>/dev/null || true
+        cp overlay_outputs/*.png all_figures/overlays/
+        cp alexandria/alex_composition_pie_chart.png  all_figures/dataset/
+        cp alexandria/alex_tc_histogram.png           all_figures/dataset/
+        cp tc_supercon/jarvis_composition_pie_chart.png all_figures/dataset/
+        cp tc_supercon/jarvis_tc_histogram.png          all_figures/dataset/
+        """
 
