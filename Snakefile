@@ -22,20 +22,12 @@ for exp in EXPS:
 rule all:
     input:
         expand("{exp}.final", exp=EXPS),
-        "charts.made",
+        "analysis.done",
         "overlay_charts.created",
         "benchmarks.verified",
-        "grid_charts.created",
-        "rmse_chart.made",
-        "ccrmse_chart.made",
-        "crystal_system_mae_charts.created",
-        "match_rate_chart.made",
         "all_figures.collected",
         "job_runs/computational_costs.json",
-        "job_runs/computational_costs.tex",
-        "job_runs/metrics_table.json",
-        "job_runs/metrics_table.tex",
-        "job_runs/epic_metrics.csv"
+        "job_runs/computational_costs.tex"
 
 rule make_atomgpt_env:
     output:
@@ -128,29 +120,21 @@ rule make_stats_yamls:
         bash job_runs/flowmm_benchmark_alex/yamls.sh
         """
 
-rule compile_results:
+rule analyze_benchmarks:
     input:
-        expand("{exp}.final", exp=EXPS),
+        expand("{exp}.final", exp=EXPS)
     output:
-        touch("metrics.computed")
+        touch("analysis.done")
     shell:
-        "atombench job_runs/ --metrics-only"
+        "atombench job_runs/ atombench_output/"
 
 rule verify_benchmarks:
     input:
-        "metrics.computed"
+        "analysis.done"
     output:
         touch("benchmarks.verified")
     shell:
         "atombench-verify job_runs/"
-
-rule make_bar_charts:
-    input:
-        "metrics.computed"
-    output:
-        touch("charts.made")
-    shell:
-        "atombench-plots --root job_runs/ --outdir figures/ --only kld mae"
 
 rule make_overlay_charts:
     input:
@@ -163,55 +147,19 @@ rule make_overlay_charts:
         bash scripts/make_overlay_charts.sh
         """
 
-rule make_grid_charts:
+rule harvest_compute_times:
     input:
-        "metrics.computed"
+        expand("{exp}.final", exp=EXPS)
     output:
-        touch("grid_charts.created")
+        "job_runs/computational_costs.json",
+        "job_runs/computational_costs.tex"
     shell:
-        "atombench-plots --root job_runs/ --outdir figures/ --only grid"
-
-rule make_crystal_system_mae_charts:
-    input:
-        "metrics.computed"
-    output:
-        touch("crystal_system_mae_charts.created")
-    shell:
-        "atombench-plots --root job_runs/ --outdir figures/ --only crystal-system-mae --symprec 0.1 --kmin 10"
-
-rule make_rmse_chart:
-    input:
-        "metrics.computed"
-    output:
-        touch("rmse_chart.made")
-    shell:
-        "atombench-plots --root job_runs/ --outdir figures/ --only rmse"
-
-rule make_ccrmse_chart:
-    input:
-        "metrics.computed"
-    output:
-        touch("ccrmse_chart.made")
-    shell:
-        "atombench-plots --root job_runs/ --outdir figures/ --only ccrmse"
-
-rule make_match_rate_chart:
-    input:
-        "metrics.computed"
-    output:
-        touch("match_rate_chart.made")
-    shell:
-        "atombench-plots --root job_runs/ --outdir figures/ --only match-rate"
+        "python scripts/harvest_compute_times.py"
 
 rule collect_all_figures:
     input:
-        "charts.made",
-        "overlay_charts.created",
-        "grid_charts.created",
-        "rmse_chart.made",
-        "ccrmse_chart.made",
-        "crystal_system_mae_charts.created",
-        "match_rate_chart.made"
+        "analysis.done",
+        "overlay_charts.created"
     output:
         touch("all_figures.collected")
     shell:
@@ -222,40 +170,21 @@ rule collect_all_figures:
                  all_figures/reconstruction \
                  all_figures/overlays \
                  all_figures/dataset
-        cp figures/comparison_bar_chart.png    all_figures/comparison/
-        cp figures/mae_bar_chart_abc.png       all_figures/comparison/
-        cp figures/mae_bar_chart_angles.png    all_figures/comparison/
-        cp figures/rmse_bar_chart.png          all_figures/comparison/
-        cp figures/ccrmse_bar_chart.png        all_figures/comparison/
-        cp figures/match_rate_bar_chart.png    all_figures/comparison/
-        find job_runs -maxdepth 2 -name '*_distribution.png' \
+        cp atombench_output/figures/comparison_bar_chart.png    all_figures/comparison/
+        cp atombench_output/figures/mae_bar_chart_abc.png       all_figures/comparison/
+        cp atombench_output/figures/mae_bar_chart_angles.png    all_figures/comparison/
+        cp atombench_output/figures/rmse_bar_chart.png          all_figures/comparison/
+        cp atombench_output/figures/ccrmse_bar_chart.png        all_figures/comparison/
+        cp atombench_output/figures/match_rate_bar_chart.png    all_figures/comparison/
+        find atombench_output/figures -maxdepth 1 -name '*_distribution.png' \
             -exec cp {{}} all_figures/distributions/ \\;
-        cp figures/crystal_system_mae_bar_chart_abc.png    all_figures/crystal_system/
-        cp figures/crystal_system_mae_bar_chart_angles.png all_figures/crystal_system/
-        cp figures/alexandria_reconstruction_grid.png all_figures/reconstruction/ 2>/dev/null || true
-        cp figures/jarvis_reconstruction_grid.png     all_figures/reconstruction/ 2>/dev/null || true
+        cp atombench_output/figures/crystal_system_mae_bar_chart_abc.png    all_figures/crystal_system/
+        cp atombench_output/figures/crystal_system_mae_bar_chart_angles.png all_figures/crystal_system/
+        cp atombench_output/figures/alexandria_reconstruction_grid.png all_figures/reconstruction/ 2>/dev/null || true
+        cp atombench_output/figures/jarvis_reconstruction_grid.png     all_figures/reconstruction/ 2>/dev/null || true
         cp overlay_outputs/*.png all_figures/overlays/
         cp alexandria/alex_composition_pie_chart.png  all_figures/dataset/
         cp alexandria/alex_tc_histogram.png           all_figures/dataset/
         cp tc_supercon/jarvis_composition_pie_chart.png all_figures/dataset/
         cp tc_supercon/jarvis_tc_histogram.png          all_figures/dataset/
         """
-
-rule harvest_compute_times:
-    input:
-        expand("{exp}.final", exp=EXPS)
-    output:
-        "job_runs/computational_costs.json",
-        "job_runs/computational_costs.tex"
-    shell:
-        "atombench-times job_runs/ --outdir job_runs/"
-
-rule harvest_metrics:
-    input:
-        "metrics.computed"
-    output:
-        "job_runs/metrics_table.json",
-        "job_runs/metrics_table.tex",
-        "job_runs/epic_metrics.csv"
-    shell:
-        "atombench-tables job_runs/ --outdir job_runs/"

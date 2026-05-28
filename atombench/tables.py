@@ -6,8 +6,8 @@ Entry point:  atombench-tables --root <job_runs_dir> --outdir <out_dir>
 Importable:   from atombench.tables import collect_metrics, build_metrics_tex
 
 Reads each benchmark subdirectory's metrics.json and writes:
-  <outdir>/metrics_table.json  — structured metrics for all discovered benchmarks
-  <outdir>/metrics_table.tex   — stacked booktabs LaTeX table (KLD / MAE / RMSD / ccRMSD)
+  <outdir>/numerical_calculations/metrics_table.json  — structured metrics for all discovered benchmarks
+  <outdir>/numerical_calculations/metrics_table.tex   — stacked booktabs LaTeX table (KLD / MAE / RMSD / ccRMSD)
 
 Table format matches the manuscript's stacked layout, extended to however many
 benchmarks are discovered. Bold marks the best value per column per dataset block
@@ -332,8 +332,9 @@ def build_metrics_tex(results: dict[str, dict]) -> str:
 # ── CLI ───────────────────────────────────────────────────────────────────────
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.argument("path", type=click.Path(exists=True, path_type=Path))
-@click.option("--outdir", "-o", default=None, type=click.Path(path_type=Path),
-              help="Output directory for metrics_table.{json,tex}. Defaults to PATH's directory.")
+@click.option("--outdir", "-o", default="atombench_output", show_default=True,
+              type=click.Path(path_type=Path),
+              help="Top-level output directory. Tables are written to OUTDIR/numerical_calculations/.")
 def main(path: Path, outdir: Optional[Path]) -> None:
     """Generate JSON + LaTeX metrics summary tables from pre-computed metrics.json files.
 
@@ -344,13 +345,12 @@ def main(path: Path, outdir: Optional[Path]) -> None:
 
     For each benchmark CSV, metrics.json must already exist in the same directory
     (produced by `atombench PATH`).  Writes:
-      <outdir>/metrics_table.json
-      <outdir>/metrics_table.tex
+      <outdir>/numerical_calculations/metrics_table.json
+      <outdir>/numerical_calculations/metrics_table.tex
+      <outdir>/numerical_calculations/epic_metrics.csv
     """
     path = path.resolve()
-    if outdir is None:
-        outdir = path if path.is_dir() else path.parent
-    outdir = Path(outdir)
+    outdir = Path(outdir) / "numerical_calculations"
     outdir.mkdir(parents=True, exist_ok=True)
 
     results = collect_metrics(path)

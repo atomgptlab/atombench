@@ -708,8 +708,8 @@ def main(argv=None) -> None:
     )
     ap.add_argument("--root",    required=True, type=Path,
                     help="Directory containing benchmark subdirs (CSV + metrics.json each).")
-    ap.add_argument("--outdir",  default="figures", type=Path,
-                    help="Output directory for PNGs (default: figures/).")
+    ap.add_argument("--outdir",  default="atombench_output", type=Path,
+                    help="Top-level output directory. PNGs are written to OUTDIR/figures/.")
     ap.add_argument("--config",  default=None,
                     help="Optional JSON config for grid charts and display name overrides.")
     ap.add_argument("--kmin",    default=10,  type=int,
@@ -726,7 +726,7 @@ def main(argv=None) -> None:
     args = ap.parse_args(argv)
 
     root   = args.root.resolve()
-    outdir = args.outdir.resolve()
+    outdir = (args.outdir / "figures").resolve()
 
     assert root.exists(), f"--root does not exist: {root}"
     outdir.mkdir(parents=True, exist_ok=True)

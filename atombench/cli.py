@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-atombench CLI — compute metrics and generate plots for crystal structure reconstruction benchmarks.
+atombench — compute metrics, generate plots, and write summary tables for
+crystal structure reconstruction benchmarks.
 
 Usage:
-    atombench path/to/benchmark.csv
-    atombench path/to/directory/of/benchmarks/
+    atombench path/to/benchmark.csv  output/dir/
+    atombench path/to/directory/     output/dir/
 """
 from __future__ import annotations
 
 import json
-import os
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
@@ -29,7 +29,6 @@ import amd
 
 from atombench._common import discover_benchmark_csvs
 
-# Plotting functions live in atombench.plots; importing here sets the Agg backend.
 from atombench.plots import (
     plot_distribution,
     plot_kld_bar_chart,
@@ -40,6 +39,8 @@ from atombench.plots import (
     plot_match_rate_bar_chart,
     plot_crystal_system_mae_from_json,
 )
+
+from atombench.tables import extract_metrics, build_metrics_tex
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 CRYSYS_ALL = [
@@ -232,54 +233,43 @@ def compute_metrics(df: pd.DataFrame, bench_name: str, *,
     }
 
 
-# Discovery is handled by atombench._common.discover_benchmark_csvs
-
-
 # ── CLI ────────────────────────────────────────────────────────────────────────
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.argument("path", type=click.Path(exists=True, path_type=Path))
-@click.option("--outdir", "-o", default="atombench_output", show_default=True, type=Path,
-              help="Output directory for metrics JSON files and plot PNGs.")
-@click.option("--name", "-n", default=None,
-              help="Override the benchmark name (only meaningful for a single CSV input).")
+@click.argument("outdir", type=click.Path(path_type=Path))
 @click.option("--amd-k", default=100, show_default=True, type=int,
               help="AMD vector length k.")
 @click.option("--symprec", default=0.1, show_default=True, type=float,
               help="Symmetry tolerance for SpacegroupAnalyzer (Å).")
 @click.option("--kmin", default=10, show_default=True, type=int,
               help="Minimum structures per crystal system for crystal-system MAE charts.")
-@click.option("--skip-metrics", is_flag=True,
-              help="Re-use an existing metrics JSON if present; skip recomputation.")
-@click.option("--metrics-only", is_flag=True,
-              help="Compute metrics only; do not generate any plots.")
 def main(
     path: Path,
     outdir: Path,
-    name: Optional[str],
     amd_k: int,
     symprec: float,
     kmin: int,
-    skip_metrics: bool,
-    metrics_only: bool,
 ) -> None:
-    """Compute metrics and generate plots for crystal structure reconstruction benchmarks.
+    """Compute metrics, generate plots, and write summary tables.
 
     \b
     PATH can be:
       • a single benchmark CSV file  (columns: id, target, prediction)
-      • a directory of CSV files     (one benchmark per CSV)
-      • a directory of subdirectories (one benchmark per subdirectory containing a CSV)
+      • a directory of CSV files     (one benchmark per CSV or subdirectory)
 
-    Metrics are written to OUTDIR as <bench_name>_metrics.json.
-    Plots are written to OUTDIR as PNG files.
+    OUTDIR is the output directory:
+      • figures/               — all plots (PNG)
+      • numerical_calculations/ — metrics_table.{json,tex}, epic_metrics.csv
+
+    Per-benchmark metrics.json files are written beside each CSV for caching.
     """
-    outdir = outdir.resolve()
-    outdir.mkdir(parents=True, exist_ok=True)
+    outdir     = Path(outdir).resolve()
+    figures_dir = outdir / "figures"
+    num_dir     = outdir / "numerical_calculations"
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    num_dir.mkdir(parents=True, exist_ok=True)
 
     benchmarks = discover_benchmark_csvs(path.resolve())
-
-    if name is not None and len(benchmarks) == 1:
-        benchmarks = [(name, benchmarks[0][1])]
 
     click.echo(f"Found {len(benchmarks)} benchmark(s).")
 
@@ -287,41 +277,31 @@ def main(
 
     for bench_name, csv_path in benchmarks:
         click.echo(f"\n── {bench_name}")
-        # metrics.json lives next to its CSV, not in --outdir
         metrics_path = csv_path.parent / "metrics.json"
 
-        if skip_metrics and metrics_path.is_file():
-            click.echo(f"  ← metrics.json (existing)")
-            with metrics_path.open() as fh:
-                metrics = json.load(fh)
-        else:
-            df = pd.read_csv(csv_path)
-            df = df.rename(columns={c: c.strip().lower() for c in df.columns})
-            missing = [c for c in ("target", "prediction") if c not in df.columns]
-            if missing:
-                click.echo(f"  ⚠ missing columns {missing} — skipping", err=True)
-                continue
-            click.echo(f"  {len(df)} rows from {csv_path.name}")
-            metrics = compute_metrics(df, bench_name,
-                                      amd_k=amd_k, symprec=symprec, kmin=kmin)
-            with metrics_path.open("w") as fh:
-                json.dump(metrics, fh, indent=2)
-            click.echo(f"  ✓ metrics.json → {metrics_path.parent.name}/")
+        df = pd.read_csv(csv_path)
+        df = df.rename(columns={c: c.strip().lower() for c in df.columns})
+        missing = [c for c in ("target", "prediction") if c not in df.columns]
+        if missing:
+            click.echo(f"  ⚠ missing columns {missing} — skipping", err=True)
+            continue
+        click.echo(f"  {len(df)} rows from {csv_path.name}")
+        metrics = compute_metrics(df, bench_name, amd_k=amd_k, symprec=symprec, kmin=kmin)
+        with metrics_path.open("w") as fh:
+            json.dump(metrics, fh, indent=2)
+        click.echo(f"  ✓ metrics.json → {metrics_path.parent.name}/")
 
         all_results.append((bench_name, csv_path, metrics))
 
     if not all_results:
         raise click.ClickException("No benchmarks were successfully processed.")
 
-    if metrics_only:
-        click.echo(f"\nDone (metrics only). metrics.json written beside each CSV.")
-        return
-
+    # ── Plots ──────────────────────────────────────────────────────────────────
     click.echo("\n── Plots")
 
     for bench_name, csv_path, _ in all_results:
         try:
-            plot_distribution(bench_name, csv_path, outdir)
+            plot_distribution(bench_name, csv_path, figures_dir)
         except Exception as e:
             click.echo(f"  ⚠ {bench_name}: distribution plot failed — {e}", err=True)
 
@@ -329,18 +309,43 @@ def main(
     rows = [pd.json_normalize(m, sep=".", max_level=3).iloc[0].to_dict() for m in all_metrics]
     df_metrics = pd.DataFrame(rows)
 
-    plot_kld_bar_chart(df_metrics, outdir)
-    plot_mae_abc_bar_chart(df_metrics, outdir)
-    plot_mae_angles_bar_chart(df_metrics, outdir)
-    plot_rmse_bar_chart(df_metrics, outdir)
-    plot_ccrmse_bar_chart(df_metrics, outdir)
-    plot_match_rate_bar_chart(df_metrics, outdir)
+    plot_kld_bar_chart(df_metrics, figures_dir)
+    plot_mae_abc_bar_chart(df_metrics, figures_dir)
+    plot_mae_angles_bar_chart(df_metrics, figures_dir)
+    plot_rmse_bar_chart(df_metrics, figures_dir)
+    plot_ccrmse_bar_chart(df_metrics, figures_dir)
+    plot_match_rate_bar_chart(df_metrics, figures_dir)
 
     if any("crystal_system_mae" in m for m in all_metrics):
         try:
-            plot_crystal_system_mae_from_json(all_metrics, outdir, kmin=kmin)
+            plot_crystal_system_mae_from_json(all_metrics, figures_dir, kmin=kmin)
         except Exception as e:
             click.echo(f"  ⚠ crystal-system MAE charts failed — {e}", err=True)
+
+    # ── Tables ─────────────────────────────────────────────────────────────────
+    click.echo("\n── Tables")
+
+    table_results = {name: extract_metrics(m) for name, _, m in all_results}
+
+    out_json = num_dir / "metrics_table.json"
+    out_tex  = num_dir / "metrics_table.tex"
+    out_csv  = num_dir / "epic_metrics.csv"
+
+    out_json.write_text(json.dumps(table_results, indent=2) + "\n")
+    out_tex.write_text(build_metrics_tex(table_results))
+
+    raw_records = []
+    for name, e in table_results.items():
+        rec = {"benchmark_name": name}
+        rec.update(pd.json_normalize(e, sep=".").iloc[0].to_dict())
+        raw_records.append(rec)
+    df_flat = pd.DataFrame(raw_records)
+    cols = ["benchmark_name"] + [c for c in df_flat.columns if c != "benchmark_name"]
+    df_flat[cols].to_csv(out_csv, index=False)
+
+    click.echo(f"  ✓ metrics_table.json")
+    click.echo(f"  ✓ metrics_table.tex")
+    click.echo(f"  ✓ epic_metrics.csv")
 
     click.echo(f"\nAll done. Output: {outdir}")
 
