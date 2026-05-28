@@ -21,6 +21,8 @@ dependencies = [
 atombench        = "atombench.cli:main"
 atombench-plots  = "atombench.plots:main"
 atombench-tables = "atombench.tables:main"
+atombench-verify = "atombench.verify:main"
+atombench-times  = "atombench.times:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

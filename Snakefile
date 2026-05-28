@@ -34,7 +34,8 @@ rule all:
         "job_runs/computational_costs.json",
         "job_runs/computational_costs.tex",
         "job_runs/metrics_table.json",
-        "job_runs/metrics_table.tex"
+        "job_runs/metrics_table.tex",
+        "job_runs/epic_metrics.csv"
 
 rule make_atomgpt_env:
     output:
@@ -133,9 +134,7 @@ rule compile_results:
     output:
         touch("metrics.computed")
     shell:
-        """
-        cd job_runs/ && bash ../scripts/loop.sh
-        """
+        "atombench job_runs/ --metrics-only"
 
 rule verify_benchmarks:
     input:
@@ -143,9 +142,7 @@ rule verify_benchmarks:
     output:
         touch("benchmarks.verified")
     shell:
-        """
-        python scripts/verify_benchmarks.py --root job_runs/
-        """
+        "atombench-verify job_runs/"
 
 rule make_bar_charts:
     input:
@@ -251,13 +248,14 @@ rule harvest_compute_times:
         "job_runs/computational_costs.json",
         "job_runs/computational_costs.tex"
     shell:
-        "python scripts/harvest_compute_times.py"
+        "atombench-times job_runs/ --outdir job_runs/"
 
 rule harvest_metrics:
     input:
         "metrics.computed"
     output:
         "job_runs/metrics_table.json",
-        "job_runs/metrics_table.tex"
+        "job_runs/metrics_table.tex",
+        "job_runs/epic_metrics.csv"
     shell:
         "atombench-tables job_runs/ --outdir job_runs/"

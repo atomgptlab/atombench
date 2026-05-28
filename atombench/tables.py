@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Optional
 
 import click
+import pandas as pd
 
 from atombench._common import discover_benchmark_csvs
 
@@ -358,12 +359,24 @@ def main(path: Path, outdir: Optional[Path]) -> None:
 
     out_json = outdir / "metrics_table.json"
     out_tex  = outdir / "metrics_table.tex"
+    out_csv  = outdir / "epic_metrics.csv"
 
     out_json.write_text(json.dumps(results, indent=2) + "\n")
     out_tex.write_text(build_metrics_tex(results))
 
+    # Flat CSV: one row per benchmark, all metrics as dot-separated columns
+    raw_records = []
+    for name, e in results.items():
+        rec = {"benchmark_name": name}
+        rec.update(pd.json_normalize(e, sep=".").iloc[0].to_dict())
+        raw_records.append(rec)
+    df_flat = pd.DataFrame(raw_records)
+    cols = ["benchmark_name"] + [c for c in df_flat.columns if c != "benchmark_name"]
+    df_flat[cols].to_csv(out_csv, index=False)
+
     click.echo(f"Wrote {out_json}")
     click.echo(f"Wrote {out_tex}")
+    click.echo(f"Wrote {out_csv}")
 
     click.echo("\nSummary (match_rate | RMSD | ccRMSD | KLD_mean):")
     for exp in sorted(results, key=_sort_key):

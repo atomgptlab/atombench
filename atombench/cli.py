@@ -287,10 +287,11 @@ def main(
 
     for bench_name, csv_path in benchmarks:
         click.echo(f"\n── {bench_name}")
-        metrics_path = outdir / f"{bench_name}_metrics.json"
+        # metrics.json lives next to its CSV, not in --outdir
+        metrics_path = csv_path.parent / "metrics.json"
 
         if skip_metrics and metrics_path.is_file():
-            click.echo(f"  ← {metrics_path.name} (existing)")
+            click.echo(f"  ← metrics.json (existing)")
             with metrics_path.open() as fh:
                 metrics = json.load(fh)
         else:
@@ -305,7 +306,7 @@ def main(
                                       amd_k=amd_k, symprec=symprec, kmin=kmin)
             with metrics_path.open("w") as fh:
                 json.dump(metrics, fh, indent=2)
-            click.echo(f"  ✓ {metrics_path.name}")
+            click.echo(f"  ✓ metrics.json → {metrics_path.parent.name}/")
 
         all_results.append((bench_name, csv_path, metrics))
 
@@ -313,7 +314,7 @@ def main(
         raise click.ClickException("No benchmarks were successfully processed.")
 
     if metrics_only:
-        click.echo(f"\nDone (metrics only). Output: {outdir}")
+        click.echo(f"\nDone (metrics only). metrics.json written beside each CSV.")
         return
 
     click.echo("\n── Plots")
