@@ -56,15 +56,15 @@ PARAMS_ALL = ("a", "b", "c", "alpha", "beta", "gamma")
 
 # ── Pymatgen / Niggli helpers ──────────────────────────────────────────────────
 @lru_cache(maxsize=20000)
-def _reduced_struct(poscar_text: str) -> Structure:
-    s = Structure.from_str(poscar_text.replace("\\n", "\n"), fmt="poscar")
+def _reduced_struct(cell_str: str) -> Structure:
+    s = parse_structure(cell_str)
     s = s.get_primitive_structure()
     return s.get_reduced_structure(reduction_algo="niggli")
 
 
 @lru_cache(maxsize=20000)
-def _niggli_params(poscar_text: str) -> Tuple[float, ...]:
-    s = _reduced_struct(poscar_text)
+def _niggli_params(cell_str: str) -> Tuple[float, ...]:
+    s = _reduced_struct(cell_str)
     return (*s.lattice.abc, *s.lattice.angles)
 
 
@@ -140,8 +140,8 @@ def _compute_atomgen_rmse(df: pd.DataFrame) -> dict:
 
 
 @lru_cache(maxsize=20000)
-def _amd_vec(poscar_text: str, k: int) -> tuple:
-    s  = _reduced_struct(poscar_text)
+def _amd_vec(cell_str: str, k: int) -> tuple:
+    s  = _reduced_struct(cell_str)
     ps = amd.periodicset_from_pymatgen_structure(s)
     return tuple(np.asarray(amd.AMD(ps, int(k)), dtype=np.float64).tolist())
 
