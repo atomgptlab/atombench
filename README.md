@@ -1,12 +1,21 @@
+<h1>
 <p align="center">
-  <img src="logo.png" alt="AtomBench logo" width="420">
+    <img src="logo.png" alt="AtomBench logo" width="500"/>
 </p>
+</h1>
+
+<h4 align="center">
+
+[![DOI](https://img.shields.io/badge/)]()
+[![arXiv](https://img.shields.io/badge/)]()
+[![Requires Python 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg?logo=python&logoColor=white)]()
+</h4>
 
 The rapid development of generative AI models for materials discovery has created a need for standardized benchmarks to evaluate their performance. In this work, we present $\textbf{AtomBench}$, a systematic benchmarking framework that comparatively evaluates three representative generative architectures-AtomGPT (transformer-based), CDVAE (diffusion variational autoencoder), and FlowMM (Riemannian flow matching)-for inverse crystal structure design. We train and evaluate these models on two high-quality DFT superconductivity datasets: JARVIS Supercon-3D and Alexandria DS-A/B, comprising over 9,000 structures with computed electron-phonon coupling properties.
 
----
+</h1>
 
-## `atombench` Python Package
+## Python Package
 
 The `atombench` package takes benchmark CSV files produced by any generative crystal structure model and computes reconstruction metrics, generates publication-ready figures, and writes summary tables — all in a single command. It is independent of the Snakemake pipeline and can be used on any benchmark CSVs you already have.
 
@@ -34,7 +43,7 @@ OUTDIR/
 
 Per-benchmark `metrics.json` files are also written beside each input CSV for caching.
 
----
+</h1>
 
 ## Cite Us
 
@@ -48,7 +57,7 @@ If you use AtomBench in your research, please cite:
 }
 ```
 
----
+</h1>
 
 ## Recompute AtomBench Benchmarks
 
