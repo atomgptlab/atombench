@@ -7,7 +7,7 @@
 <h4 align="center">
 
 [![DOI](https://img.shields.io/badge/)]()
-[![arXiv](https://img.shields.io/badge/arXiv-2312.03687-blue.svg?logo=arxiv&logoColor=white.svg)]([https://arxiv.org/abs/2312.03687](https://arxiv.org/abs/2510.16165))
+[![arXiv](https://img.shields.io/badge/arXiv-2312.03687-blue.svg?logo=arxiv&logoColor=white.svg)](https://arxiv.org/abs/2510.16165)
 [![Requires Python 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg?logo=python&logoColor=white)]()
 </h4>
 
