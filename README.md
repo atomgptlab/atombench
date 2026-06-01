@@ -1,6 +1,6 @@
 <h1>
 <p align="center">
-    <img src="logo.png" alt="AtomBench logo" width="400"/>
+    <img src="logo.png" alt="AtomBench logo" width="350"/>
 </p>
 </h1>
 <h4 align="center">
