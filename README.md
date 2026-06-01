@@ -1,8 +1,8 @@
-
+<h1>
 <p align="center">
     <img src="logo.png" alt="AtomBench logo" width="400"/>
 </p>
-
+</h1>
 <h4 align="center">
 
 [![arXiv](https://img.shields.io/badge/arXiv-2312.03687-blue.svg?logo=arxiv&logoColor=white.svg)](https://arxiv.org/abs/2510.16165)
