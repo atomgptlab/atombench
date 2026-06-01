@@ -1,8 +1,7 @@
-<h1>
+
 <p align="center">
-    <img src="logo.png" alt="AtomBench logo" width="500"/>
+    <img src="logo.png" alt="AtomBench logo" width="400"/>
 </p>
-</h1>
 
 <h4 align="center">
 
