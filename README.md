@@ -15,19 +15,15 @@ The rapid development of generative AI models for materials discovery has create
 
 </h1>
 
-## Python Package
+## Installation & Usage
 
 The `atombench` package takes benchmark CSV files produced by any generative crystal structure model and computes reconstruction metrics, generates publication-ready figures, and writes summary tables — all in a single command. It is independent of the Snakemake pipeline and can be used on any benchmark CSVs you already have.
 
 Each CSV must have columns `id`, `target`, and `prediction`, where `target` and `prediction` are POSCAR-formatted crystal structures stored as strings.
 
-### Installation
-
 ```bash
 pip install atombench
 ```
-
-### Usage
 
 ```bash
 atombench  PATH  OUTDIR
