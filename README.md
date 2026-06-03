@@ -4,16 +4,18 @@
 
 **A benchmarking framework for generative crystal reconstruction models**
 
-[![arXiv](https://img.shields.io/badge/arXiv-2510.16165-b31b1b.svg?logo=arxiv&logoColor=white)](https://arxiv.org/abs/2510.16165)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-%E2%89%A53.9-blue.svg)](pyproject.toml)
-[![Open in Colab](https://img.shields.io/badge/Colab-tutorial-orange.svg)](https://github.com/crhysc/jarvis-tools-notebooks/blob/master/atombench_example.ipynb)
+[![arXiv](https://img.shields.io/badge/arXiv-2510.16165-FF5050.svg?logo=arxiv&logoColor=white)](https://arxiv.org/abs/2510.16165)
+[![License: MIT](https://img.shields.io/badge/License-MIT-FF9999.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-%E2%89%A53.9-FF5050.svg)](pyproject.toml)
+[![Open in Colab](https://img.shields.io/badge/Colab-tutorial-FF9999.svg)](https://github.com/crhysc/jarvis-tools-notebooks/blob/master/atombench_example.ipynb)
 
 </div>
 
----
+<h1></h1>
 
-AtomBench is a model-agnostic framework for comparing generative crystal-reconstruction models on equal footing. We use it to benchmark four inverse-design models — AtomGPT, CDVAE, FlowMM, and MatterGen — trained and tested on the JARVIS Supercon-3D and Alexandria DS-A/B superconductivity datasets. Any model that emits crystal reconstructions can be plugged in and scored the same way.
+**AtomBench is a Python package for benchmarking generative crystal-reconstruction models.** Point it at a model's predicted structures and it scores how faithfully they reconstruct the targets, putting any inverse-design model on equal footing. That is what the package is for, and what most people come here to use.
+
+We also built AtomBench to run our own study, where we used it to benchmark four models — AtomGPT, CDVAE, FlowMM, and MatterGen — on the JARVIS Supercon-3D and Alexandria DS-A/B superconductivity datasets. Those benchmarks are fully reproducible through the Snakemake pipeline in this repository, but reproducing them is a secondary use.
 
 ## Contents
 
@@ -25,14 +27,14 @@ AtomBench is a model-agnostic framework for comparing generative crystal-reconst
 - [Citation](#citation)
 - [License](#license)
 
-AtomBench comes in two parts you can use independently:
+The repository has two parts you can use independently:
 
-- **`atombench`** — a Python package that turns benchmark CSVs into metrics, figures, and tables. Runs anywhere with Python 3.9+.
-- **The Snakemake pipeline** — trains and evaluates the models that produce those CSVs. Needs a Linux HPC cluster with SLURM and CUDA 11.8.
+- **`atombench`** — the Python package, and the main reason this repository exists. It turns a model's benchmark CSVs into reconstruction metrics, figures, and tables, and runs anywhere with Python 3.9+.
+- **The Snakemake pipeline** — how we produced the benchmarks in our study. It trains and evaluates the models that generate those CSVs, and needs a Linux HPC cluster with SLURM and CUDA 11.8.
 
-Most users only need the package. Reach for the pipeline if you want to regenerate the benchmark data from scratch.
+Most users only need the package. Reach for the pipeline only if you want to regenerate our benchmark data from scratch.
 
----
+<h1></h1>
 
 ## Quick Start — the `atombench` package
 
@@ -66,7 +68,7 @@ Every input CSV needs three columns:
 - `target` — the ground-truth structure, as a POSCAR-formatted string
 - `prediction` — the model's structure, as a POSCAR-formatted string
 
----
+<h1></h1>
 
 ## Reproducing the Full Benchmark
 
@@ -148,7 +150,7 @@ snakemake -p --verbose all --cores 1
 
 Snakemake works through every benchmark in dependency order. The next section explains how that works and what to do when a job fails.
 
----
+<h1></h1>
 
 ## Working with Snakemake
 
@@ -221,7 +223,7 @@ This keeps Snakemake's dependency tracking intact while letting you work around 
 
 Each Snakefile under `job_runs/` sets its own `sbatch` directives, including a specific GPU request (A100, H100, L40S, and so on). If your cluster doesn't have or doesn't allow the requested type, the job fails. The fix is to edit that Snakefile (or its job script) and swap in a GPU you do have.
 
----
+<h1></h1>
 
 ## Troubleshooting
 
@@ -233,7 +235,7 @@ Each Snakefile under `job_runs/` sets its own `sbatch` directives, including a s
 
 For anything not listed here, run `bash depcheck.sh` first — it catches most environment problems before they turn into downstream failures.
 
----
+<h1></h1>
 
 ## Tutorials
 
@@ -243,7 +245,7 @@ Per-model setup and usage notebooks:
 - [CDVAE](https://github.com/crhysc/jarvis-tools-notebooks/blob/master/jarvis-tools-notebooks/cdvae_example.ipynb)
 - [FlowMM](https://github.com/crhysc/jarvis-tools-notebooks/blob/master/jarvis-tools-notebooks/flowmm_example.ipynb)
 
----
+<h1></h1>
 
 ## Citation
 
@@ -257,7 +259,7 @@ If you use AtomBench in your research, please cite:
 }
 ```
 
----
+<h1></h1>
 
 ## License
 
