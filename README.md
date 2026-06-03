@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="banner.png" alt="AtomBench" width="100%" />
+<img src="logo.png" alt="AtomBench" width="100%" />
 
 # AtomBench
 
