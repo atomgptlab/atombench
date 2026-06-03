@@ -13,7 +13,7 @@
 
 <h1></h1>
 
-**AtomBench is a Python package for benchmarking generative crystal-reconstruction models.** Point it at a model's predicted structures and it scores how faithfully they reconstruct the targets. Its main use is running several models in one go, where it overlays them in shared figures and gathers their metrics into a single table.
+**AtomBench is a Python package that automates the statistical analysis of the reconstruction performance of generative inverse materials design models.** Point it at a model's predicted structures and it scores how faithfully they reconstruct the targets. Its main use is running several models in one go, where it overlays them in shared figures and gathers their metrics into a single table.
 
 We also used AtomBench to run our own study, benchmarking four models (AtomGPT, CDVAE, FlowMM, and MatterGen) on the JARVIS Supercon-3D and Alexandria DS-A/B superconductivity datasets. Those benchmarks are fully reproducible through the Snakemake pipeline in this repository.
 
@@ -36,7 +36,7 @@ The repository has two parts you can use independently:
 
 ## Quick Start: the `atombench` package
 
-The `atombench` package reads benchmark CSVs from any generative model and produces reconstruction metrics, figures, and summary tables. It doesn't depend on the Snakemake pipeline, so you can point it at CSVs you already have.
+The `atombench` package reads benchmark CSVs from any generative model and produces reconstruction metrics, figures, and summary tables for fast and accurate comparison.
 
 Install it:
 
