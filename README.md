@@ -50,7 +50,7 @@ Run it:
 atombench PATH OUTDIR
 ```
 
-`PATH` is usually a directory of benchmark CSVs, one per model, which AtomBench runs together and overlays in the figures and metrics table. A single CSV works the same way for one model. For example:
+`PATH` is usually a directory of benchmark CSVs, one per model, which AtomBench runs together and overlays in the figures and metrics table. One CSV for a single-model benchmark is also a valid input. For example:
 
 ```
 benchmarks/
@@ -84,7 +84,7 @@ Every input CSV needs three columns:
 
 ## Reproducing the Full Benchmark
 
-This section covers re-running the Snakemake pipeline on an HPC cluster to reproduce the results from scratch. There is also a [guided walkthrough in Google Colab](https://github.com/crhysc/jarvis-tools-notebooks/blob/master/atombench_example.ipynb).
+This section covers re-running the Snakemake pipeline on an HPC cluster to reproduce our results from scratch. There is also a [guided walkthrough in Google Colab](https://github.com/crhysc/jarvis-tools-notebooks/blob/master/atombench_example.ipynb).
 
 ### Requirements
 
