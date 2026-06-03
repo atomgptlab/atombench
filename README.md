@@ -1,10 +1,8 @@
 <div align="center">
 
-<img src="logo.png" alt="AtomBench" width="100%" />
+<img src="logo.png" alt="AtomBench" width=450 />
 
-# AtomBench
-
-**A benchmarking framework for generative crystal reconstruction models in conventional superconductors**
+**A benchmarking framework for generative crystal reconstruction models**
 
 [![arXiv](https://img.shields.io/badge/arXiv-2510.16165-b31b1b.svg?logo=arxiv&logoColor=white)](https://arxiv.org/abs/2510.16165)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
