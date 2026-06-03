@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="logo.png" alt="AtomBench" width=450 />
+<img src="logo.png" alt="AtomBench" width=550 />
 
 **A benchmarking framework for generative crystal reconstruction models**
 
