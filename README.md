@@ -13,7 +13,7 @@
 
 <h1></h1>
 
-**AtomBench is a Python package for benchmarking generative crystal-reconstruction models.** Point it at a model's predicted structures and it scores how faithfully they reconstruct the targets. AtomBench generates publication-ready figures, tables, and metrics. Compare one or many models at once.
+**AtomBench is a Python package for benchmarking generative crystal-reconstruction models.** Point it at a model's predicted structures and it scores how faithfully they reconstruct the targets. Its main use is running several models in one go, where it overlays them in shared figures and gathers their metrics into a single table.
 
 We also used AtomBench to run our own study, benchmarking four models (AtomGPT, CDVAE, FlowMM, and MatterGen) on the JARVIS Supercon-3D and Alexandria DS-A/B superconductivity datasets. Those benchmarks are fully reproducible through the Snakemake pipeline in this repository.
 
@@ -50,11 +50,25 @@ Run it:
 atombench PATH OUTDIR
 ```
 
-`PATH` is a directory of benchmark CSVs or a single CSV. `OUTDIR` is where results go:
+`PATH` is usually a directory of benchmark CSVs, one per model, which AtomBench runs together and overlays in the figures and metrics table. A single CSV works the same way for one model. For example:
 
 ```
-OUTDIR/
-├── figures/                  # plots (PNG)
+benchmarks/
+├── atomgpt.csv
+├── cdvae.csv
+├── flowmm.csv
+└── mattergen.csv
+```
+
+```bash
+atombench benchmarks/ out/
+```
+
+`out/` then holds two folders:
+
+```
+out/
+├── figures/                  # plots (PNG), all models overlaid
 └── numerical_calculations/   # metrics_table.{json,tex}, epic_metrics.csv
 ```
 
