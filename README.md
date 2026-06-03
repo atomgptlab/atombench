@@ -2,7 +2,7 @@
 
 <img src="logo.png" alt="AtomBench" width=550 />
 
-**A benchmarking framework for generative crystal reconstruction models**
+**A Python package for benchmarking generative crystal reconstruction models**
 
 [![arXiv](https://img.shields.io/badge/arXiv-2510.16165-FF5050.svg?logo=arxiv&logoColor=white)](https://arxiv.org/abs/2510.16165)
 [![License: MIT](https://img.shields.io/badge/License-MIT-FF9999.svg)](LICENSE)
@@ -13,13 +13,13 @@
 
 <h1></h1>
 
-**AtomBench is a Python package for benchmarking generative crystal-reconstruction models.** Point it at a model's predicted structures and it scores how faithfully they reconstruct the targets, putting any inverse-design model on equal footing. That is what the package is for, and what most people come here to use.
+**AtomBench is a Python package for benchmarking generative crystal-reconstruction models.** Point it at a model's predicted structures and it scores how faithfully they reconstruct the targets, putting any inverse-design model on equal footing.
 
-We also built AtomBench to run our own study, where we used it to benchmark four models — AtomGPT, CDVAE, FlowMM, and MatterGen — on the JARVIS Supercon-3D and Alexandria DS-A/B superconductivity datasets. Those benchmarks are fully reproducible through the Snakemake pipeline in this repository, but reproducing them is a secondary use.
+We also used AtomBench to run our own study, benchmarking four models (AtomGPT, CDVAE, FlowMM, and MatterGen) on the JARVIS Supercon-3D and Alexandria DS-A/B superconductivity datasets. Those benchmarks are fully reproducible through the Snakemake pipeline in this repository.
 
 ## Contents
 
-- [Quick Start — the `atombench` package](#quick-start--the-atombench-package)
+- [Quick Start: the `atombench` package](#quick-start-the-atombench-package)
 - [Reproducing the Full Benchmark](#reproducing-the-full-benchmark)
 - [Working with Snakemake](#working-with-snakemake)
 - [Troubleshooting](#troubleshooting)
@@ -29,14 +29,12 @@ We also built AtomBench to run our own study, where we used it to benchmark four
 
 The repository has two parts you can use independently:
 
-- **`atombench`** — the Python package, and the main reason this repository exists. It turns a model's benchmark CSVs into reconstruction metrics, figures, and tables, and runs anywhere with Python 3.9+.
-- **The Snakemake pipeline** — how we produced the benchmarks in our study. It trains and evaluates the models that generate those CSVs, and needs a Linux HPC cluster with SLURM and CUDA 11.8.
-
-Most users only need the package. Reach for the pipeline only if you want to regenerate our benchmark data from scratch.
+- **`atombench`** is the Python package. It turns a model's benchmark CSVs into reconstruction metrics, figures, and tables, and runs anywhere with Python 3.9+.
+- **The Snakemake pipeline** is how we produced the benchmarks in our study. It trains and evaluates the models that generate those CSVs, and needs a Linux HPC cluster with SLURM and CUDA 11.8.
 
 <h1></h1>
 
-## Quick Start — the `atombench` package
+## Quick Start: the `atombench` package
 
 The `atombench` package reads benchmark CSVs from any generative model and produces reconstruction metrics, figures, and summary tables. It doesn't depend on the Snakemake pipeline, so you can point it at CSVs you already have.
 
@@ -64,9 +62,9 @@ A `metrics.json` is also written next to each input CSV and reused as a cache on
 
 Every input CSV needs three columns:
 
-- `id` — a unique identifier for the structure
-- `target` — the ground-truth structure, as a POSCAR-formatted string
-- `prediction` — the model's structure, as a POSCAR-formatted string
+- `id`: a unique identifier for the structure
+- `target`: the ground-truth structure, as a POSCAR-formatted string
+- `prediction`: the model's structure, as a POSCAR-formatted string
 
 <h1></h1>
 
@@ -102,7 +100,7 @@ See the [conda activation docs](https://docs.conda.io/projects/conda/en/latest/d
 
 ### Installation
 
-**1. Clone the repository.** Use SSH, not HTTPS — the vendored models require it.
+**1. Clone the repository.** Use SSH, not HTTPS; the vendored models require it.
 
 ```bash
 git clone git@github.com:atomgptlab/atombench.git
@@ -162,7 +160,7 @@ Snakemake builds a dependency graph of jobs and runs only the ones whose outputs
 
 The root `Snakefile` defines `rule all`, which lists every final target the pipeline produces. Each model/dataset benchmark has its own Snakefile under `job_runs/<benchmark>/` that the root pulls in as a module, so reading the root `Snakefile` is the clearest way to see the whole dependency structure.
 
-Progress is tracked with marker files in the repository root. When a benchmark finishes, Snakemake creates a `*.final` file such as `agpt_benchmark_jarvis.final`. Their presence is how Snakemake knows a step is done — which is also what makes manual recovery possible.
+Progress is tracked with marker files in the repository root. When a benchmark finishes, Snakemake creates a `*.final` file such as `agpt_benchmark_jarvis.final`. Their presence is how Snakemake knows a step is done, which is also what makes manual recovery possible.
 
 A dry run prints the plan without running anything:
 
@@ -217,7 +215,7 @@ This keeps Snakemake's dependency tracking intact while letting you work around 
 - The `Snakefile`'s `rule all` and the modules it imports are the source of truth for the DAG. Read it when the job ordering is unclear.
 - A missing `*.final` marker means Snakemake treats that step as incomplete. `touch`-ing it after the work is genuinely done is the supported way to resume.
 - When a job dies, running its script directly under `job_runs/` gives you the error output Snakemake swallows.
-- If something fails in a way that makes no sense, run `depcheck.sh` again — most surprises are environment-level.
+- If something fails in a way that makes no sense, run `depcheck.sh` again; most surprises are environment-level.
 
 ### GPU selection
 
@@ -229,11 +227,11 @@ Each Snakefile under `job_runs/` sets its own `sbatch` directives, including a s
 
 - **`conda activate` does nothing or errors.** Your shell isn't initialized. Run `eval "$(conda shell.bash hook)"` and check for `(base)` in your prompt.
 - **Strange, hard-to-place failures.** You probably have more than one Python manager active at once (conda, micromamba, system Python). Stick to a single conda installation and confirm `which python` points inside the active environment.
-- **Cryptic CUDA or scheduler errors right away.** You're likely on an unsupported system — the pipeline needs Linux + SLURM + CUDA 11.8.
+- **Cryptic CUDA or scheduler errors right away.** You're likely on an unsupported system: the pipeline needs Linux + SLURM + CUDA 11.8.
 - **`models/` is empty or incomplete.** You skipped `git submodule update --init --recursive`.
 - **Snakemake only says "job failed".** The real error is in the job log; re-run with `--show-failed-logs`, or run the failing job script directly.
 
-For anything not listed here, run `bash depcheck.sh` first — it catches most environment problems before they turn into downstream failures.
+For anything not listed here, run `bash depcheck.sh` first; it catches most environment problems before they turn into downstream failures.
 
 <h1></h1>
 
