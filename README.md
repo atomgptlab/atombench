@@ -50,7 +50,7 @@ Run it:
 atombench PATH OUTDIR
 ```
 
-`PATH` is a single benchmark CSV or a directory of them. `OUTDIR` is where results go:
+`PATH` is a directory of benchmark CSVs or a single CSV. `OUTDIR` is where results go:
 
 ```
 OUTDIR/
