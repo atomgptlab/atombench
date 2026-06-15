@@ -18,7 +18,7 @@
 
 We also used AtomBench to run our own study, benchmarking four models (AtomGPT, CDVAE, FlowMM, and MatterGen) on the JARVIS Supercon-3D and Alexandria DS-A/B superconductivity datasets. Those benchmarks are fully reproducible through the Snakemake pipeline in this repository.
 
-📖 **Documentation:** [atomgptlab.github.io/atombench](https://atomgptlab.github.io/atombench/) (canonical) · [crhysc.github.io/atombench](https://crhysc.github.io/atombench/)
+**Documentation:** <https://atomgptlab.github.io/atombench/>
 
 ## Contents
 
@@ -87,76 +87,19 @@ Every input CSV needs three columns:
 
 ## Submit to the JARVIS-Leaderboard
 
-The same CSV you score with `atombench` can be submitted to the
-[JARVIS-Leaderboard](https://atomgptlab.github.io/jarvis_leaderboard/Special/AtomGenBench/)
-as an `AI / AtomGen` contribution. `atombench-submit` validates your CSV against
-the benchmark's real requirements, builds a valid contribution (normalizing
-predictions to POSCAR for the scorer), and opens a pull request for you — it
-wraps the leaderboard's workflow without modifying it.
-
-Install the submission extras (also needs `git` on your PATH):
+`atombench-submit` turns the same CSV you score into a valid `AI / AtomGen`
+contribution and opens a pull request — it validates the CSV, normalizes
+predictions to POSCAR, and wraps the leaderboard's workflow without modifying it.
 
 ```bash
 pip install 'atombench[submit]'
-```
-
-Create a [GitHub token](https://github.com/settings/tokens) (classic token with
-the `repo` scope, or a fine-grained token with Contents + Pull requests set to
-*Read and write*) and export it:
-
-```bash
-export GITHUB_TOKEN=ghp_xxx
-```
-
-**Submit against an existing benchmark** (e.g. JARVIS Supercon-3D):
-
-```bash
-atombench-submit predictions.csv \
-  --dataset dft_3d --prop Tc_supercon \
-  --model-name MyModel --author-email me@example.com \
-  --project-url https://example.com/paper \
-  --git-url https://github.com/me/mymodel
-```
-
-This forks `atomgptlab/jarvis_leaderboard` (configurable with `--repo`), pushes a
-branch, and opens a PR. Point it at the official NIST leaderboard instead with
-`--repo usnistgov/jarvis_leaderboard --base develop`.
-
-**Preview locally without pushing** — build and inspect the contribution first:
-
-```bash
 atombench-submit predictions.csv --dataset dft_3d --prop Tc_supercon \
   --model-name MyModel --author-email me@example.com \
-  --project-url ... --git-url ... \
-  --no-push --out ./submission
+  --project-url https://example.com/paper --git-url https://github.com/me/mymodel
 ```
 
-**Create a brand-new benchmark** from your CSV (uses the `target` column as the
-ground truth, e.g. for a dataset the leaderboard doesn't have yet):
-
-```bash
-atombench-submit predictions.csv --dataset alex --prop Tc \
-  --new-benchmark --description "Reconstruction on the Alexandria DS-A/B superconductors." \
-  --model-name MyModel --author-email me@example.com \
-  --project-url ... --git-url ...
-```
-
-The same thing from Python:
-
-```python
-from atombench import submit
-
-submit(
-    "predictions.csv",
-    dataset="dft_3d", prop="Tc_supercon",
-    model_name="MyModel", author_email="me@example.com",
-    project_url="https://example.com/paper",
-    git_url="https://github.com/me/mymodel",
-    push=False, out_dir="./submission",   # drop push=False to open a PR
-)
-```
-
-Run `atombench-submit -h` for all options.
+See the [documentation](https://atomgptlab.github.io/atombench/) for the GitHub
+token, previewing without pushing, creating new benchmarks, and the Python API.
 
 <h1></h1>
 
