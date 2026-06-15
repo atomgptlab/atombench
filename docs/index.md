@@ -1,5 +1,3 @@
-# AtomBench
-
 ```{rst-class} lead
 Benchmark generative crystal **reconstruction** models: score how faithfully a
 model rebuilds known crystals, render figures and tables, and publish results to
@@ -43,6 +41,13 @@ Build a benchmark CSV, compute metrics, and submit — end to end.
 The `submit()` and `compute_metrics()` Python functions.
 :::
 
+:::{grid-item-card} {octicon}`workflow;1em;sd-mr-1` Reproducing our benchmarks
+:link: reproducing
+:link-type: doc
+
+Re-run the Snakemake pipeline on an HPC cluster.
+:::
+
 :::{grid-item-card} {octicon}`trophy;1em;sd-mr-1` Leaderboard
 :link: https://atomgptlab.github.io/jarvis_leaderboard/Special/AtomGenBench/
 
@@ -58,4 +63,5 @@ Home <self>
 installation
 tutorial
 api
+reproducing
 ```

@@ -1,4 +1,4 @@
-# AtomBench tutorial
+# Tutorial
 
 Score a model's crystal reconstructions, then submit them to the JARVIS-Leaderboard.
 
