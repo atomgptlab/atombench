@@ -24,7 +24,7 @@ The repository has two independent parts: the `atombench` package, which runs an
 
 <h1></h1>
 
-## Quick Start: the `atombench` package
+## AtomBench Python Package
 
 Install the package:
 
@@ -55,6 +55,8 @@ out/
 ```
 
 Each input CSV needs three columns: `id` (a unique identifier), `target` (the ground-truth structure as a POSCAR string), and `prediction` (the model's structure as a POSCAR string). A `metrics.json` is cached next to each CSV for later runs.
+
+See the [documentation](https://atomgptlab.github.io/atombench/tutorial.html) for metric definitions, the full list of options, and the Python API.
 
 <h1></h1>
 
