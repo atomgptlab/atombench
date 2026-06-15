@@ -88,7 +88,7 @@ Every input CSV needs three columns:
 ## Submit to the JARVIS-Leaderboard
 
 `atombench-submit` turns the same CSV you score into a valid `AI / AtomGen`
-contribution and opens a pull request — it validates the CSV, normalizes
+contribution and opens a pull request. It validates the CSV, normalizes
 predictions to POSCAR, and wraps the leaderboard's workflow without modifying it.
 
 ```bash
