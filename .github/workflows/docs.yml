@@ -3,16 +3,6 @@ name: docs
 on:
   push:
     branches: [main]
-    paths:
-      - "docs/**"
-      - "atombench/**"
-      - "pyproject.toml"
-      - ".github/workflows/docs.yml"
-  pull_request:
-    paths:
-      - "docs/**"
-      - "atombench/**"
-      - ".github/workflows/docs.yml"
   workflow_dispatch:
 
 # Allow the deploy job to publish to GitHub Pages.
@@ -47,10 +37,8 @@ jobs:
         with:
           path: docs/_build/html
 
-  # Deploy only from main (skip on PRs).
   deploy:
     needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
