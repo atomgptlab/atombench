@@ -1,3 +1,5 @@
+# AtomBench
+
 ```{rst-class} lead
 Benchmark generative crystal **reconstruction** models: score how faithfully a
 model rebuilds known crystals, render figures and tables, and publish results to
