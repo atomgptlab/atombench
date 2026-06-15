@@ -23,7 +23,7 @@ We also used AtomBench to run our own study, benchmarking four models (AtomGPT, 
 ## Contents
 
 - [Quick Start: the `atombench` package](#quick-start-the-atombench-package)
-- [Reproducing the Full Benchmark](#reproducing-the-full-benchmark)
+- [Reproducing Our Benchmarks](#reproducing-our-benchmarks)
 - [Working with Snakemake](#working-with-snakemake)
 - [Troubleshooting](#troubleshooting)
 - [Tutorials](#tutorials)
@@ -103,7 +103,7 @@ token, previewing without pushing, creating new benchmarks, and the Python API.
 
 <h1></h1>
 
-## Reproducing the Full Benchmark
+## Reproducing Our Benchmarks
 
 This section covers re-running the Snakemake pipeline on an HPC cluster to reproduce our results from scratch. There is also a [guided walkthrough in Google Colab](https://github.com/crhysc/jarvis-tools-notebooks/blob/master/atombench_example.ipynb).
 
