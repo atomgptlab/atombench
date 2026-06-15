@@ -18,7 +18,7 @@
 
 We also used AtomBench to run our own study, benchmarking four models (AtomGPT, CDVAE, FlowMM, and MatterGen) on the JARVIS Supercon-3D and Alexandria DS-A/B superconductivity datasets. Those benchmarks are fully reproducible through the Snakemake pipeline in this repository.
 
-📖 **Full documentation:** <https://atomgptlab.github.io/atombench/>
+📖 **Documentation:** [atomgptlab.github.io/atombench](https://atomgptlab.github.io/atombench/) (canonical) · [crhysc.github.io/atombench](https://crhysc.github.io/atombench/)
 
 ## Contents
 
