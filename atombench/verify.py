@@ -112,6 +112,7 @@ def _dataset_tag(name: str) -> Optional[str]:
 def group_by_dataset(
     pairs: List[Tuple[str, Path]]
 ) -> Dict[str, List[Tuple[str, Path]]]:
+    """Group ``(name, csv_path)`` pairs by dataset tag (``alex`` / ``jarvis``)."""
     groups: Dict[str, List[Tuple[str, Path]]] = {}
     ungrouped = []
     for name, csv_path in pairs:
@@ -137,7 +138,7 @@ def compare_group(
 ) -> bool:
     """
     Return True if ID sets are consistent (or differences are fully accounted for
-    by *.misses.csv files); False on unaccounted mismatches.
+    by ``*.misses.csv`` files); False on unaccounted mismatches.
     """
     pretty = "Alexandria" if dataset_key == "alex" else "JARVIS"
     if len(items) < 2:

@@ -1,0 +1,144 @@
+/* ============================================================
+   AtomBench documentation — finishing touches on top of furo
+   ============================================================ */
+
+/* ----- Sidebar logo (widen the sidebar so the logo can be ~50% larger) ----- */
+.sidebar-drawer {
+  min-width: 18.5em;
+}
+.sidebar-container {
+  width: 18.5em;
+}
+.sidebar-logo {
+  max-width: 100%;
+  margin: 0.8rem auto 0.4rem;
+}
+.sidebar-logo-container {
+  padding: 0.4rem 0.4rem 0.2rem;
+}
+
+/* ----- Center the left sidebar navigation links ----- */
+.sidebar-tree .reference {
+  text-align: center;
+}
+.sidebar-tree li > ul {
+  margin-left: 0; /* keep every level centered on the same axis */
+}
+/* balance the right padding reserved for the expand caret so text stays centered */
+.sidebar-tree li.has-children > .reference {
+  padding-left: var(--sidebar-expander-width);
+}
+
+/* ----- Landing-page lead paragraph ----- */
+p.lead {
+  font-size: 1.2rem;
+  line-height: 1.65;
+  color: var(--color-foreground-secondary);
+  max-width: 46rem;
+  margin: 0.2rem 0 1.5rem;
+}
+
+/* ----- Headings ----- */
+h1 {
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+h2 {
+  letter-spacing: -0.01em;
+  margin-top: 2.2rem;
+}
+
+/* ----- sphinx-design cards ----- */
+.sd-card {
+  border: 1px solid var(--color-background-border);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+.sd-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.10);
+  border-color: var(--color-brand-primary);
+}
+.sd-card .sd-card-title {
+  font-weight: 650;
+  font-size: 1.05rem;
+}
+.sd-card .sd-card-title .octicon {
+  color: var(--color-brand-primary);
+  vertical-align: -0.12em;
+}
+/* make whole-card links blend in */
+.sd-card a.sd-stretched-link::after {
+  border-radius: 14px;
+}
+
+/* ----- Buttons (CTA) ----- */
+.sd-btn {
+  border-radius: 9px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.sd-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* ----- Code blocks ----- */
+div.highlight {
+  border-radius: 10px;
+}
+.highlight pre {
+  border-radius: 10px;
+  border: 1px solid var(--color-background-border);
+}
+/* inline code: subtle brand tint */
+code.literal {
+  border-radius: 5px;
+}
+button.copybtn {
+  border-radius: 6px;
+}
+
+/* ----- Tables ----- */
+table.docutils {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--color-background-border);
+}
+table.docutils th {
+  background: var(--color-background-secondary);
+}
+
+/* ----- Admonitions: a touch softer ----- */
+.admonition,
+div.admonition {
+  border-radius: 10px;
+}
+
+/* ----- Search box as a rounded "bubble" ----- */
+.sidebar-search-container {
+  margin: var(--sidebar-search-space-above) 1rem 0;
+  border: 1px solid var(--color-sidebar-search-border);
+  border-radius: 999px;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.sidebar-search-container:focus-within {
+  border-color: var(--color-brand-primary);
+  box-shadow: 0 0 0 2px rgba(226, 55, 68, 0.18);
+}
+.sidebar-search {
+  border: none; /* drop furo's top/bottom hairlines; the bubble has the border now */
+  background: transparent;
+}
+
+/* ----- Footer: drop the (empty) copyright line ----- */
+.footer-wrapper .copyright {
+  display: none;
+}
+
+/* ----- Brand-colored top header on the landing hero (optional accent) ----- */
+.sidebar-brand-text {
+  font-weight: 700;
+}

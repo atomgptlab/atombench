@@ -8,6 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-FF9999.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-%E2%89%A53.9-FF5050.svg)](pyproject.toml)
 [![Open in Colab](https://img.shields.io/badge/Colab-tutorial-FF9999.svg)](https://github.com/crhysc/jarvis-tools-notebooks/blob/master/atombench_example.ipynb)
+[![Documentation](https://img.shields.io/badge/docs-latest-FF5050.svg)](https://atomgptlab.github.io/atombench/)
 
 </div>
 
@@ -16,6 +17,8 @@
 **AtomBench is a Python package that automates the statistical analysis of the reconstruction performance of generative inverse materials design models.** Point it at a model's predicted structures and it scores how faithfully they reconstruct the targets. Its main use is running several models in one go, where it overlays them in shared figures and gathers their metrics into a single table.
 
 We also used AtomBench to run our own study, benchmarking four models (AtomGPT, CDVAE, FlowMM, and MatterGen) on the JARVIS Supercon-3D and Alexandria DS-A/B superconductivity datasets. Those benchmarks are fully reproducible through the Snakemake pipeline in this repository.
+
+📖 **Full documentation:** <https://atomgptlab.github.io/atombench/>
 
 ## Contents
 
@@ -79,6 +82,81 @@ Every input CSV needs three columns:
 - `id`: a unique identifier for the structure
 - `target`: the ground-truth structure, as a POSCAR-formatted string
 - `prediction`: the model's structure, as a POSCAR-formatted string
+
+<h1></h1>
+
+## Submit to the JARVIS-Leaderboard
+
+The same CSV you score with `atombench` can be submitted to the
+[JARVIS-Leaderboard](https://atomgptlab.github.io/jarvis_leaderboard/Special/AtomGenBench/)
+as an `AI / AtomGen` contribution. `atombench-submit` validates your CSV against
+the benchmark's real requirements, builds a valid contribution (normalizing
+predictions to POSCAR for the scorer), and opens a pull request for you — it
+wraps the leaderboard's workflow without modifying it.
+
+Install the submission extras (also needs `git` on your PATH):
+
+```bash
+pip install 'atombench[submit]'
+```
+
+Create a [GitHub token](https://github.com/settings/tokens) (classic token with
+the `repo` scope, or a fine-grained token with Contents + Pull requests set to
+*Read and write*) and export it:
+
+```bash
+export GITHUB_TOKEN=ghp_xxx
+```
+
+**Submit against an existing benchmark** (e.g. JARVIS Supercon-3D):
+
+```bash
+atombench-submit predictions.csv \
+  --dataset dft_3d --prop Tc_supercon \
+  --model-name MyModel --author-email me@example.com \
+  --project-url https://example.com/paper \
+  --git-url https://github.com/me/mymodel
+```
+
+This forks `atomgptlab/jarvis_leaderboard` (configurable with `--repo`), pushes a
+branch, and opens a PR. Point it at the official NIST leaderboard instead with
+`--repo usnistgov/jarvis_leaderboard --base develop`.
+
+**Preview locally without pushing** — build and inspect the contribution first:
+
+```bash
+atombench-submit predictions.csv --dataset dft_3d --prop Tc_supercon \
+  --model-name MyModel --author-email me@example.com \
+  --project-url ... --git-url ... \
+  --no-push --out ./submission
+```
+
+**Create a brand-new benchmark** from your CSV (uses the `target` column as the
+ground truth, e.g. for a dataset the leaderboard doesn't have yet):
+
+```bash
+atombench-submit predictions.csv --dataset alex --prop Tc \
+  --new-benchmark --description "Reconstruction on the Alexandria DS-A/B superconductors." \
+  --model-name MyModel --author-email me@example.com \
+  --project-url ... --git-url ...
+```
+
+The same thing from Python:
+
+```python
+from atombench import submit
+
+submit(
+    "predictions.csv",
+    dataset="dft_3d", prop="Tc_supercon",
+    model_name="MyModel", author_email="me@example.com",
+    project_url="https://example.com/paper",
+    git_url="https://github.com/me/mymodel",
+    push=False, out_dir="./submission",   # drop push=False to open a PR
+)
+```
+
+Run `atombench-submit -h` for all options.
 
 <h1></h1>
 
