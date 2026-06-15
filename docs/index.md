@@ -1,7 +1,7 @@
 # AtomBench
 
 ```{rst-class} lead
-Benchmark generative crystal reconstruction models: score how faithfully a
+Benchmark generative crystal reconstruction models. Score how faithfully a
 model rebuilds known crystals, render figures and tables, and publish results to
 the JARVIS-Leaderboard.
 ```
@@ -54,6 +54,12 @@ Re-run the Snakemake pipeline on an HPC cluster.
 :link: https://atomgptlab.github.io/jarvis_leaderboard/Special/AtomGenBench/
 
 Browse the live AtomGenBench leaderboard.
+:::
+
+:::{grid-item-card} {octicon}`mark-github;1em;sd-mr-1` GitHub
+:link: https://github.com/atomgptlab/atombench
+
+Browse the source, file issues, and contribute.
 :::
 ::::
 
