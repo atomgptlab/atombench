@@ -17,9 +17,16 @@ dependencies = [
     "amd",
 ]
 
+[project.optional-dependencies]
+# Needed only for `atombench-submit` (pushing to the JARVIS-Leaderboard).
+# `git` must also be available on PATH, and jarvis-tools improves byte-level
+# compatibility of normalized POSCAR strings with the leaderboard scorer.
+submit = ["requests", "jarvis-tools"]
+
 [project.scripts]
 atombench        = "atombench.cli:main"
 atombench-verify = "atombench.verify:main"
+atombench-submit = "atombench.submit:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
